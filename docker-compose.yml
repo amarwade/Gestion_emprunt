@@ -1,0 +1,9 @@
+version: "3.9"
+
+services:
+  app:
+    build: .
+    container_name: emprunt-app
+    restart: unless-stopped
+    ports:
+      - "8080:80"
