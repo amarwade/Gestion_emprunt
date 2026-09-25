@@ -1,10 +1,11 @@
-FROM nginx:alpine
+# fait référence à l'image officielle de Nginx basée sur Alpine Linux, qui est légère et optimisée pour les performances.
+FROM nginx:alpine 
 
 # Config nginx custom (routing SPA, cache statique)
 COPY nginx/nginx.conf /etc/nginx/conf.d/default.conf
 
 # Copie le site statique dans le dossier servi par nginx
-# Adapte le nom du dossier source si ton code n'est pas à la racine (ex: ./public, ./src)
+# Adapte le nom du dossier source si mon code n'est pas à la racine (ex: ./public, ./src)
 COPY . /usr/share/nginx/html
 
 # Expose le port 80 pour accéder à l'application
