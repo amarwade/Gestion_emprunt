@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>EduLoan — Connexion Étudiant</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="css/login.css" />
+</head>
+<body>
+  <div class="login-container">
+    <div class="login-card">
+      <div class="brand">
+        <div class="brand-mark" aria-hidden="true">
+          <img src="assets/images/logo.png" alt="EduLoan Logo" class="brand-logo-img" />
+        </div>
+        <div class="brand-name">EduLoan</div>
+      </div>
+
+      <div class="header-text">
+        <h1>Connexion Étudiant</h1>
+        <p>Accédez à votre espace personnel pour emprunter des PC.</p>
+      </div>
+
+      <!-- Message d'erreur global -->
+      <div class="alert alert-error" id="globalError" style="display: none;"></div>
+
+      <!-- Message de succès -->
+      <div class="alert alert-success" id="globalSuccess" style="display: none;"></div>
+
+      <form id="login-form" novalidate>
+        <!-- Identifiant -->
+        <div class="form-group">
+          <label for="student_id">Identifiant étudiant <span class="required">*</span></label>
+          <input 
+            type="text" 
+            id="student_id" 
+            name="student_id" 
+            placeholder="Ex: 2026123"
+            autocomplete="username"
+            required 
+          />
+          <div class="field-error" id="error-student_id"></div>
+        </div>
+
+        <!-- Mot de passe -->
+        <div class="form-group">
+          <label for="password">Mot de passe <span class="required">*</span></label>
+          <div class="password-container">
+            <input 
+              type="password" 
+              id="password" 
+              name="password" 
+              placeholder="Votre mot de passe" 
+              autocomplete="current-password"
+              required 
+            />
+            <button type="button" class="toggle-password" id="togglePassword" aria-label="Afficher/Masquer le mot de passe">
+              <svg id="eyeIcon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                <circle cx="12" cy="12" r="3"></circle>
+              </svg>
+            </button>
+          </div>
+          <div class="field-error" id="error-password"></div>
+        </div>
+
+        <!-- Bouton Connexion -->
+        <button type="submit" class="btn btn-primary" id="submitBtn">
+          <span class="btn-text">Connexion</span>
+          <span class="btn-loader" style="display: none;">
+            <svg class="spinner" viewBox="0 0 50 50">
+              <circle cx="25" cy="25" r="20" fill="none" stroke-width="5"></circle>
+            </svg>
+          </span>
+        </button>
+      </form>
+
+      <!-- Liens supplémentaires -->
+      <div class="form-footer">
+        <a href="/forgot-password.html" class="link-forgot">Mot de passe oublié ?</a>
+      </div>
+
+      <!-- Lien vers inscription -->
+      <div class="register-link">
+        <p>Pas de compte ? <a href="/inscription.html">S'inscrire ici</a></p>
+      </div>
+    </div>
+  </div>
+
+  <script src="js/login.js"></script>
+</body>
+</html>
