@@ -1,5 +1,5 @@
 /**
- * EduLoan — Module d'inscription Étudiant (Frontend Only)
+ * EduLoan — Module d'inscription Étudiant (Persistance dans data/etudiants.csv)
  */
 
 document.addEventListener("DOMContentLoaded", () => {
@@ -17,60 +17,53 @@ document.addEventListener("DOMContentLoaded", () => {
 
   const CURRENT_YEAR = new Date().getFullYear(); // 2026
 
-  // ==========================================
-  // MOCK DATA & BACKEND API INTERFACE
-  // ==========================================
   /**
-   * Mock des identifiants d'étudiants déjà inscrits dans le système.
+   * Identifiants extraits dynamiquement depuis data/etudiants.csv
    */
-  const MOCK_EXISTING_STUDENT_IDS = ["2026001", "2026123", "2026999"];
+  let existingStudentIdsFromCsv = [];
 
   /**
-   * Service asynchrone d'inscription (Mock).
-   * NOTE POUR LE DÉVELOPPEUR BACKEND :
-   * Remplacer le corps de cette fonction par un véritable appel API (ex: fetch('/api/inscription', ...))
-   *
-   * @param {Object} studentData - { nom, prenom, student_id, password }
-   * @returns {Promise<Object>} Résolution si succès, rejet si échec ou identifiant déjà existant.
+   * Charge et lit data/etudiants.csv pour obtenir la liste à jour des identifiants inscrits.
    */
-  async function registerStudentApi(studentData) {
-    // Simulation du délai réseau
-    await new Promise((resolve) => setTimeout(resolve, 500));
-
-    // Simulation de la contrainte d'unicité de l'identifiant (gérée par le backend)
-    if (MOCK_EXISTING_STUDENT_IDS.includes(studentData.student_id)) {
-      const error = new Error("Un compte existe déjà avec cet identifiant.");
-      error.code = "DUPLICATE_STUDENT_ID";
-      throw error;
-    }
-
-    return {
-      success: true,
-      message: "Compte créé avec succès !",
-      data: {
-        nom: studentData.nom,
-        prenom: studentData.prenom,
-        student_id: studentData.student_id
+  async function loadExistingStudentIdsFromCsv() {
+    try {
+      const response = await fetch("data/etudiants.csv?t=" + Date.now());
+      if (!response.ok) return;
+      const text = await response.text();
+      const lines = text.split(/\r?\n/);
+      
+      existingStudentIdsFromCsv = [];
+      // Ignorer l'en-tête (ligne 0)
+      for (let i = 1; i < lines.length; i++) {
+        const line = lines[i].trim();
+        if (!line) continue;
+        const parts = line.split(";");
+        if (parts.length >= 3) {
+          existingStudentIdsFromCsv.push(parts[2].trim());
+        }
       }
-    };
+      console.log("Identifiants CSV chargés:", existingStudentIdsFromCsv);
+    } catch (err) {
+      console.warn("Impossible de charger data/etudiants.csv en lecture directe:", err);
+    }
   }
 
+  // Charger la liste des identifiants depuis le CSV au démarrage
+  loadExistingStudentIdsFromCsv();
+
   // ==========================================
-  // TOGLE MOT DE PASSE (AFFICHER / MASQUER)
+  // TOGGLE MOT DE PASSE (AFFICHER / MASQUER)
   // ==========================================
   togglePasswordBtn.addEventListener("click", () => {
     const isPassword = passwordInput.type === "password";
     passwordInput.type = isPassword ? "text" : "password";
 
-    // Mise à jour de l'icône
     if (isPassword) {
-      // Icône Oeil barré
       eyeIcon.innerHTML = `
         <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/>
         <line x1="1" y1="1" x2="23" y2="23"/>
       `;
     } else {
-      // Icône Oeil standard
       eyeIcon.innerHTML = `
         <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
         <circle cx="12" cy="12" r="3"/>
@@ -122,7 +115,7 @@ document.addEventListener("DOMContentLoaded", () => {
     return pattern.test(id.trim());
   }
 
-  // Nettoyage à la saisie
+  // Nettoyage des erreurs lors de la saisie
   [nomInput, prenomInput, studentIdInput, passwordInput].forEach((input) => {
     input.addEventListener("input", () => {
       const errorId = `error-${input.id}`;
@@ -132,7 +125,7 @@ document.addEventListener("DOMContentLoaded", () => {
   });
 
   // ==========================================
-  // GESTION DE LA SOUMISSION DU FORMULAIRE
+  // SOUMISSION DU FORMULAIRE ET AJOUT DANS CSV
   // ==========================================
   registerForm.addEventListener("submit", async (e) => {
     e.preventDefault();
@@ -175,39 +168,57 @@ document.addEventListener("DOMContentLoaded", () => {
 
     if (hasErrors) return;
 
-    // 2. Soumission simulée à l'API (Mock Backend)
+    // 2. Vérification préventive côté client dans la liste CSV chargée
+    if (existingStudentIdsFromCsv.includes(studentId)) {
+      showFieldError(studentIdInput, "error-student_id", "Un compte existe déjà avec cet identifiant.");
+      globalErrorAlert.textContent = "Un compte existe déjà avec cet identifiant.";
+      globalErrorAlert.style.display = "block";
+      return;
+    }
+
+    // 3. Soumission vers l'API /api/inscription (Persistance CSV)
     submitBtn.disabled = true;
     submitBtn.querySelector("span").textContent = "Inscription en cours...";
 
     try {
-      const response = await registerStudentApi({
-        nom,
-        prenom,
-        student_id: studentId,
-        password
+      const response = await fetch("/api/inscription", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+          nom,
+          prenom,
+          student_id: studentId,
+          password
+        })
       });
 
-      // Succès d'inscription
-      globalSuccessAlert.textContent = `${response.message} Redirection vers la page de connexion...`;
+      const resData = await response.json();
+
+      if (!response.ok || !resData.success) {
+        throw new Error(resData.error || "Une erreur est survenue lors de l'inscription.");
+      }
+
+      // Inscription réussie
+      globalSuccessAlert.textContent = "Compte créé avec succès ! Redirection vers la page de connexion...";
       globalSuccessAlert.style.display = "block";
+
+      // Mettre à jour la liste locale
+      existingStudentIdsFromCsv.push(studentId);
 
       // Redirection après 2 secondes vers la page de connexion existante/prévue
       setTimeout(() => {
         window.location.href = "login.html";
       }, 2000);
+
     } catch (error) {
       submitBtn.disabled = false;
       submitBtn.querySelector("span").textContent = "Créer mon compte";
 
-      if (error.code === "DUPLICATE_STUDENT_ID") {
-        // Exigence exacte : « Un compte existe déjà avec cet identifiant. »
-        showFieldError(studentIdInput, "error-student_id", error.message);
-        globalErrorAlert.textContent = error.message;
-        globalErrorAlert.style.display = "block";
-      } else {
-        globalErrorAlert.textContent = error.message || "Une erreur est survenue lors de l'inscription.";
-        globalErrorAlert.style.display = "block";
-      }
+      showFieldError(studentIdInput, "error-student_id", error.message);
+      globalErrorAlert.textContent = error.message;
+      globalErrorAlert.style.display = "block";
     }
   });
 });

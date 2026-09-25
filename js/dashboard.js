@@ -41,6 +41,8 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   }
 
+  const defaultLaptopSvg = `<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="4" width="18" height="12" rx="2"/><path d="M2 20h20M7 16v4M17 16v4"/></svg>`;
+
   // Modal logic for "Voir" buttons
   const modalOverlay = document.createElement("div");
   modalOverlay.className = "modal-overlay";
@@ -48,7 +50,7 @@ document.addEventListener("DOMContentLoaded", () => {
     <div class="modal-card">
       <button class="modal-close" aria-label="Fermer">&times;</button>
       <div class="modal-header">
-        <div class="modal-icon">💻</div>
+        <div class="modal-icon">${defaultLaptopSvg}</div>
         <div>
           <span class="modal-id"></span>
           <h3 class="modal-title"></h3>
@@ -101,7 +103,7 @@ document.addEventListener("DOMContentLoaded", () => {
       if (pcImg) {
         modalIcon.innerHTML = `<img src="${pcImg}" alt="${pcTitle}" style="width:100%;height:100%;object-fit:contain;border-radius:8px;" />`;
       } else {
-        modalIcon.innerHTML = "💻";
+        modalIcon.innerHTML = defaultLaptopSvg;
       }
 
       modalOverlay.querySelector(".modal-id").textContent = pcId;
