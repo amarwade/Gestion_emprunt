@@ -277,7 +277,21 @@ document.addEventListener("DOMContentLoaded", () => {
         if (contentType.includes("application/json")) {
           const resData = await response.json();
           if (!response.ok || !resData.success) {
-            throw new Error(resData.error || "Erreur lors de l'enregistrement.");
+            const message = resData.error || "Erreur lors de l'enregistrement.";
+            submitBtn.disabled = false;
+            submitBtn.querySelector("span").textContent = "Créer mon compte";
+
+            if (message.toLowerCase().includes("mot de passe")) {
+              showFieldError(passwordInput, "error-password", message);
+            } else if (message.toLowerCase().includes("identifiant") || message.toLowerCase().includes("compte existe")) {
+              showFieldError(studentIdInput, "error-student_id", message);
+            }
+
+            if (globalErrorAlert) {
+              globalErrorAlert.textContent = message;
+              globalErrorAlert.style.display = "block";
+            }
+            return;
           }
           savedInCsv = true;
           existingStudentIdsFromCsv.push(studentId);
