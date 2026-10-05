@@ -102,14 +102,14 @@ app.post('/api/login', (req, res) => {
   if (!student) {
     return res.status(401).json({
       success: false,
-      error: 'Identifiant ou mot de passe incorrect.'
+      error: 'Utilisateur inexistant. Vérifiez votre identifiant ou créez un compte.'
     });
   }
 
   if (student.password !== password) {
     return res.status(401).json({
       success: false,
-      error: 'Identifiant ou mot de passe incorrect.'
+      error: 'Mot de passe incorrect. Veuillez réessayer.'
     });
   }
 
@@ -183,6 +183,13 @@ app.post('/api/inscription', (req, res) => {
     return res.status(400).json({
       success: false,
       error: 'Tous les champs sont obligatoires.'
+    });
+  }
+
+  if (password.length < 8) {
+    return res.status(400).json({
+      success: false,
+      error: 'Le mot de passe doit contenir au moins 8 caractères.'
     });
   }
 

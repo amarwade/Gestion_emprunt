@@ -221,6 +221,9 @@ document.addEventListener("DOMContentLoaded", () => {
       if (!password) {
         showFieldError(passwordInput, "error-password", "Le mot de passe est obligatoire.");
         hasErrors = true;
+      } else if (password.length < 8) {
+        showFieldError(passwordInput, "error-password", "Le mot de passe doit contenir au moins 8 caractères.");
+        hasErrors = true;
       }
 
       if (hasErrors) return;

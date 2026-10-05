@@ -1,6 +1,10 @@
 // ===== GESTION DU FORMULAIRE DE CONNEXION (SIMULATION FRONTEND & BACKEND HYBRIDE) =====
 
 document.addEventListener('DOMContentLoaded', () => {
+  // Invalider toute ancienne authentification locale avant une nouvelle tentative.
+  localStorage.removeItem('eduloan_auth');
+  localStorage.removeItem('eduloan_user');
+
   const form = document.getElementById('login-form');
   const studentIdInput = document.getElementById('student_id');
   const passwordInput = document.getElementById('password');
@@ -9,13 +13,6 @@ document.addEventListener('DOMContentLoaded', () => {
   const submitBtn = document.getElementById('submitBtn');
   const globalError = document.getElementById('globalError');
   const globalSuccess = document.getElementById('globalSuccess');
-
-  // Données mock initiales pour les tests frontend
-  const MOCK_STUDENTS = [
-    { student_id: '2026120', nom: 'BENDAOU', prenom: 'Assia', password: 'password' },
-    { student_id: '2026125', nom: 'BENDAOU', prenom: 'Assia', password: 'password' },
-    { student_id: '2026130', nom: 'DIOP', prenom: 'Moussa', password: 'password' }
-  ];
 
   // ===== AFFICHAGE/MASQUAGE DU MOT DE PASSE =====
   if (togglePasswordBtn && passwordInput && eyeIcon) {
@@ -136,68 +133,36 @@ document.addEventListener('DOMContentLoaded', () => {
       const studentId = studentIdInput.value.trim();
       const password = passwordInput.value;
 
-      // Simulation Frontend / Mock
-      let authSuccessful = false;
-      let userData = {
-        student_id: studentId,
-        nom: 'Étudiant',
-        prenom: 'Inscrit'
-      };
+      // Le serveur vérifie le compte et le mot de passe dans data/etudiants.csv.
+      const apiUrl = window.location.port === '3000'
+        ? '/api/login'
+        : 'http://localhost:3000/api/login';
 
-      // 1. Vérifier dans le localStorage
       try {
-        const localRegistered = JSON.parse(localStorage.getItem('eduloan_etudiants_inscrits') || '[]');
-        const foundLocal = localRegistered.find(s => String(s.student_id).trim() === studentId);
-        if (foundLocal) {
-          authSuccessful = true;
-          userData = {
-            student_id: foundLocal.student_id,
-            nom: foundLocal.nom,
-            prenom: foundLocal.prenom
-          };
-        }
-      } catch (err) {}
+        const response = await fetch(apiUrl, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ student_id: studentId, password })
+        });
+        const result = await response.json();
 
-      // 2. Vérifier dans les mocks initiaux si non trouvé
-      if (!authSuccessful) {
-        const foundMock = MOCK_STUDENTS.find(s => s.student_id === studentId);
-        if (foundMock) {
-          authSuccessful = true;
-          userData = {
-            student_id: foundMock.student_id,
-            nom: foundMock.nom,
-            prenom: foundMock.prenom
-          };
-        }
-      }
-
-      // 3. Si l'identifiant est au format valide (simulation souple pour les tests d'équipe)
-      if (!authSuccessful && /^\d{7}$/.test(studentId)) {
-        authSuccessful = true;
-        userData = {
-          student_id: studentId,
-          nom: 'Étudiant',
-          prenom: 'EduLoan'
-        };
-      }
-
-      // Traitement du résultat
-      setTimeout(() => {
-        if (authSuccessful) {
-          // Enregistrer la session en local
-          localStorage.setItem('eduloan_auth', 'true');
-          localStorage.setItem('eduloan_user', JSON.stringify(userData));
-
-          showSuccess(`Bienvenue ${userData.prenom} ${userData.nom} ! Redirection vers votre Espace Étudiant...`);
-          
-          setTimeout(() => {
-            window.location.href = 'espace-etudiant.html';
-          }, 1000);
-        } else {
-          showError('Identifiant ou mot de passe incorrect.');
+        if (!response.ok || !result.success || !result.data) {
+          showError(result.error || 'Identifiant ou mot de passe incorrect.');
           resetButton();
+          return;
         }
-      }, 500);
+
+        const userData = result.data;
+        localStorage.setItem('eduloan_auth', 'true');
+        localStorage.setItem('eduloan_user', JSON.stringify(userData));
+        showSuccess(`Bienvenue ${userData.prenom} ${userData.nom} ! Redirection vers votre Espace Étudiant...`);
+        setTimeout(() => {
+          window.location.href = 'espace-etudiant.html';
+        }, 1000);
+      } catch (error) {
+        showError('Le serveur de connexion est inaccessible. Dans le dossier du projet, lancez « npm start », puis ouvrez http://localhost:3000 et réessayez.');
+        resetButton();
+      }
     });
   }
 });
