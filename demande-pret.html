@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="theme-color" content="#f5f7ff" />
+  <title>EduLoan — Demande de prêt</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="css/demande-pret.css?v=2" />
+  <link rel="stylesheet" href="css/theme.css" />
+</head>
+<body>
+  <main class="pret-container">
+    <section class="pret-card" aria-labelledby="page-title">
+      <div class="brand-row">
+        <a href="espace-etudiant.html" class="back-link" aria-label="Retour aux PC disponibles" title="Retour aux PC disponibles">←</a>
+        <a href="espace-etudiant.html" class="brand" aria-label="EduLoan, espace étudiant">
+          <img class="brand-logo" src="assets/images/logo.png" alt="" />
+        </a>
+      </div>
+
+      <header class="header-text">
+        <h1 id="page-title">Demande de prêt</h1>
+        <p>Choisissez un PC, puis indiquez le motif et la durée souhaitée.</p>
+      </header>
+
+      <div class="alert-box error" id="global-error" hidden role="alert"></div>
+      <div class="alert-box info" id="global-info" hidden role="status"></div>
+
+      <form id="loan-form" novalidate>
+        <fieldset class="pc-selection">
+          <legend>PC à emprunter <span class="required">*</span></legend>
+          <p class="section-hint">Sélectionnez un seul PC parmi les appareils disponibles.</p>
+          <div class="pc-picker" id="pc-picker">
+            <input type="hidden" id="pc-id" name="pcId" />
+            <button class="pc-picker-trigger" id="pc-picker-trigger" type="button" aria-haspopup="listbox" aria-expanded="false" aria-controls="pc-options">
+              <span class="pc-picker-value" id="pc-picker-value">Choisir un PC parmi les appareils disponibles</span>
+              <svg class="pc-picker-chevron" viewBox="0 0 24 24" aria-hidden="true"><path d="m6 9 6 6 6-6" /></svg>
+            </button>
+            <div class="pc-options" id="pc-options" role="listbox" aria-label="PC disponibles" hidden></div>
+          </div>
+          <div class="field-error" id="error-pc"></div>
+        </fieldset>
+
+        <div class="form-group">
+          <label for="motif">Motif de la demande <span class="required">*</span></label>
+          <textarea
+            id="motif"
+            name="motif"
+            placeholder="Expliquez votre besoin (ex. projet académique, travaux pratiques…)"
+            rows="3"
+            minlength="5"
+            required
+          ></textarea>
+          <div class="field-error" id="error-motif"></div>
+        </div>
+
+        <div class="form-group">
+          <label for="duree">Durée souhaitée en jours <span class="required">*</span></label>
+          <div class="duration-input-wrapper">
+            <input type="number" id="duree" name="duree" min="1" max="60" step="1" placeholder="Ex. 7" required />
+            <span class="unit-badge">jours</span>
+          </div>
+          <small class="helper-text">Choisissez une durée de 1 à 60 jours.</small>
+          <div class="field-error" id="error-duree"></div>
+        </div>
+
+        <div class="form-group">
+          <label for="justificatif">Justificatif <span class="optional">(optionnel)</span></label>
+          <div class="file-upload-wrapper">
+            <input type="file" id="justificatif" name="justificatif" accept=".pdf,.png,.jpg,.jpeg,.doc,.docx" />
+            <div class="file-upload-text">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true">
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                <polyline points="17 8 12 3 7 8"/>
+                <line x1="12" y1="3" x2="12" y2="15"/>
+              </svg>
+              <span>Ajouter un fichier (PDF, image ou document)</span>
+            </div>
+            <div class="file-upload-name" id="file-upload-name" hidden></div>
+          </div>
+        </div>
+
+        <p class="eligibility-note">L’absence d’emprunt en cours sera vérifiée par le backend lors de l’intégration.</p>
+        <div class="form-actions">
+          <a href="espace-etudiant.html" class="cancel-btn" id="cancel-btn">Annuler</a>
+          <button type="submit" class="submit-btn" id="submit-btn">Envoyer la demande</button>
+        </div>
+      </form>
+    </section>
+  </main>
+  <script src="js/demande-pret.js"></script>
+</body>
+</html>

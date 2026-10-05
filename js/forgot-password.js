@@ -120,7 +120,7 @@ document.addEventListener('DOMContentLoaded', () => {
         
         // Rediriger après 3 secondes
         setTimeout(() => {
-          window.location.href = '/login.html';
+          window.location.href = 'login.html';
         }, 3000);
       } else {
         // Erreur
