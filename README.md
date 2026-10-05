@@ -106,7 +106,8 @@ Gestion_emprunt/
 │   └── js/dashboard.js          ← Logique dashboard
 │
 ├── 💾 Base de données
-│   └── data/etudiants.csv       ← Fichier CSV avec étudiants
+│   ├── data/etudiants.csv       ← Comptes étudiants
+│   └── data/demandes_pret.csv   ← Demandes et statuts de prêt
 │
 ├── 🖼️  Ressources
 │   └── assets/images/           ← Images et logo
@@ -119,8 +120,7 @@ Gestion_emprunt/
 │
 └── 🐳 Optionnel (Docker)
     ├── Dockerfile
-    ├── docker-compose.yml
-    └── nginx/nginx.conf
+    └── docker-compose.yml
 ```
 
 ---
@@ -219,6 +219,44 @@ Response:
   }
 }
 ```
+
+### Demande de prêt
+Une demande nécessite une session ouverte. Les demandes sont enregistrées dans
+`data/demandes_pret.csv` avec le statut initial `en_attente`.
+
+```http
+POST /api/emprunts
+Content-Type: application/json
+
+{
+  "pc_id": "EL-1042",
+  "motif": "Projet de développement web",
+  "duree_jours": 7
+}
+```
+
+Le serveur vérifie la session, le PC choisi, le motif, la durée et l’absence
+d’une demande active pour l’étudiant ou le PC. `GET /api/pcs` renvoie le
+catalogue complet avec les disponibilités calculées à partir du CSV.
+
+```http
+GET /api/mes-emprunts
+```
+
+Cette route renvoie les demandes de l’étudiant connecté.
+
+### Statuts des demandes
+- `en_attente` : demande enregistrée ; le PC est réservé et n’est plus disponible.
+- `en_cours` : prêt accepté et PC actuellement emprunté.
+- `refusee` : demande refusée ; le PC redevient disponible.
+- `terminee` : PC rendu ; il redevient disponible.
+
+Pour ce prototype sans interface d’administration, le statut peut être mis à
+jour directement dans `data/demandes_pret.csv`. Ne modifiez pas l’identifiant
+ni les autres colonnes. Le fichier CSV n’est pas servi publiquement.
+
+L’espace étudiant affiche toutes les demandes de la session connectée, tandis
+que « Emprunts en cours » ne montre que les lignes au statut `en_cours`.
 
 ---
 
@@ -411,3 +449,5 @@ Développé pour le projet EduLoan de gestion d'emprunts de PC.
 ---
 
 **Besoin d'aide ? Consultez les guides dans le dossier du projet! 🚀**
+#   t e s t  
+ 
