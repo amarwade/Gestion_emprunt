@@ -155,9 +155,9 @@ document.addEventListener('DOMContentLoaded', () => {
         const userData = result.data;
         localStorage.setItem('eduloan_auth', 'true');
         localStorage.setItem('eduloan_user', JSON.stringify(userData));
-        showSuccess(`Bienvenue ${userData.prenom} ${userData.nom} ! Redirection vers votre Espace Étudiant...`);
+        showSuccess(`Bienvenue ${userData.prenom} ${userData.nom} ! Redirection...`);
         setTimeout(() => {
-          window.location.href = 'espace-etudiant.html';
+          window.location.href = userData.role === 'admin' ? 'admin.html' : 'espace-etudiant.html';
         }, 1000);
       } catch (error) {
         showError('Le serveur de connexion est inaccessible. Dans le dossier du projet, lancez « npm start », puis ouvrez http://localhost:3000 et réessayez.');
