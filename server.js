@@ -9,7 +9,13 @@ const CSV_FILE = path.join(__dirname, 'data', 'etudiants.csv');
 
 // Middleware
 app.use(express.json());
-app.use(express.static(__dirname));
+app.use(express.static(__dirname, { extensions: ['html', 'htm'] }));
+
+// Redirections conviviales (avec ou sans .html)
+app.get('/login', (req, res) => res.sendFile(path.join(__dirname, 'login.html')));
+app.get('/inscription', (req, res) => res.sendFile(path.join(__dirname, 'inscription.html')));
+app.get('/demande-pret', (req, res) => res.sendFile(path.join(__dirname, 'demande-pret.html')));
+app.get('/espace-etudiant', (req, res) => res.sendFile(path.join(__dirname, 'espace-etudiant.html')));
 
 // Configuration des sessions
 app.use(session({

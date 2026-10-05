@@ -305,15 +305,18 @@ document.addEventListener("DOMContentLoaded", () => {
       // 4. Message de confirmation
       if (globalSuccessAlert) {
         if (savedInCsv) {
-          globalSuccessAlert.textContent = "Compte créé et enregistré avec succès dans data/etudiants.csv !";
+          globalSuccessAlert.textContent = "Compte créé avec succès ! Redirection vers la page de connexion...";
         } else {
-          globalSuccessAlert.textContent = "Compte créé avec succès (enregistré en local) !";
+          globalSuccessAlert.textContent = "Compte créé avec succès ! Redirection vers la page de connexion...";
         }
         globalSuccessAlert.style.display = "block";
       }
 
-      // Réinitialisation du formulaire
+      // Réinitialisation du formulaire et redirection vers login.html
       registerForm.reset();
+      setTimeout(() => {
+        window.location.href = "login.html";
+      }, 2000);
     });
   }
 });

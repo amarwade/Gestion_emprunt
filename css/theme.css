@@ -1,0 +1,155 @@
+/* EduLoan shared visual tokens and components. Loaded after each page stylesheet. */
+:root {
+  --indigo: #5a57e6;
+  --indigo-hover: #4844c8;
+  --indigo-dark: var(--indigo-hover);
+  --slate: #1e293b;
+  --muted: #64748b;
+  --line: #e2e8f0;
+  --surface: #ffffff;
+  --page-bg: #f5f7ff;
+  --page-gradient: linear-gradient(135deg, #f8faff 0%, #f1f4ff 100%);
+  --pastel-indigo: #eef2ff;
+  --pastel-cyan: #ecfeff;
+  --pastel-violet: #f5f3ff;
+  --pastel-blue: #eff6ff;
+  --lavender: var(--pastel-indigo);
+  --mint: var(--pastel-cyan);
+  --pink: var(--pastel-violet);
+  --peach: #fff0e4;
+  --orange: #f3a15f;
+  --green: #10b981;
+  --success-color: #10b981;
+  --error-color: #ef4444;
+  --red: #ef4444;
+  --red-soft: #fef2f2;
+  --red-border: #fecaca;
+  --error-light: #fee2e2;
+  --success-light: #dcfce7;
+  --green-soft: #ecfdf5;
+  --green-border: #a7f3d0;
+  --font: Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  --radius-card: 20px;
+  --radius-control: 12px;
+  --radius-button: 14px;
+  --card-padding: 32px;
+  --shadow-card: 0 10px 30px rgba(49, 62, 111, .08);
+  --shadow-button: 0 5px 14px rgba(90, 87, 230, .2);
+  --focus-ring: 0 0 0 3px rgba(90, 87, 230, .15);
+  --type-page-title: 28px;
+  --type-section-title: 22px;
+  --type-card-title: 18px;
+
+  /* Compatibility aliases used by existing page stylesheets. */
+  --primary-color: var(--indigo);
+  --primary-dark: var(--indigo-hover);
+  --primary-light: #817ef0;
+  --blue: var(--indigo);
+  --blue-text: var(--indigo);
+  --blue-hover: var(--indigo-hover);
+  --blue-soft: var(--pastel-indigo);
+  --bg: var(--page-bg);
+  --background: var(--page-bg);
+  --background-secondary: #eff2fa;
+  --sidebar: var(--surface);
+  --text: var(--muted);
+  --text-primary: var(--slate);
+  --text-secondary: var(--muted);
+  --text-tertiary: #94a3b8;
+  --heading: var(--slate);
+  --muted-2: #94a3b8;
+  --border-color: var(--line);
+  --border-subtle: #d5def3;
+  --radius: var(--radius-card);
+  --radius-btn: var(--radius-button);
+  --border-radius: var(--radius-control);
+  --shadow: var(--shadow-card);
+  --shadow-sm: 0 1px 2px rgba(49, 62, 111, .05);
+  --shadow-lg: var(--shadow-card);
+  --shadow-xl: var(--shadow-card);
+  --shadow-md: var(--shadow-button);
+  --transition: all .18s ease;
+}
+
+html, body { font-family: var(--font); }
+body { color: var(--slate); background: var(--page-gradient); }
+
+/* Identical EduLoan mark and wordmark across all pages. */
+.brand { gap: 0; text-decoration: none; }
+.brand-logo { display: block; width: 112px; height: 112px; flex: 0 0 112px; object-fit: contain; }
+.login-card > .brand { width: fit-content; margin: 0 auto 32px; }
+.register-card > .brand { width: fit-content; margin: 0 auto 24px; }
+
+/* Shared card, button, and form-control geometry. */
+.login-card, .register-card, .pret-card, .hero-card, .step-card, .pc-card, .loans-panel, .loan-block {
+  border-radius: var(--radius-card);
+  box-shadow: var(--shadow-card);
+}
+.btn, .submit-btn, .cancel-btn, .new-request-btn, .modal-btn {
+  border-radius: var(--radius-button);
+  font-family: var(--font);
+  transition: color .18s ease, background-color .18s ease, border-color .18s ease, box-shadow .18s ease, transform .18s ease;
+}
+.new-request-btn { display: inline-flex; align-items: center; padding: 8px 14px; font-size: 13px; font-weight: 600; text-decoration: none; }
+.btn-primary, .submit-btn, .new-request-btn, .modal-btn.primary {
+  border-color: transparent;
+  color: #fff;
+  background: var(--indigo);
+  box-shadow: var(--shadow-button);
+}
+.btn-primary:hover:not(:disabled), .submit-btn:hover:not(:disabled), .new-request-btn:hover, .modal-btn.primary:hover {
+  color: #fff;
+  background: var(--indigo-hover);
+  box-shadow: 0 8px 18px rgba(90, 87, 230, .24);
+}
+.cancel-btn, .modal-btn.secondary { border-radius: var(--radius-button); }
+.btn-secondary { color: var(--indigo); border-color: #e0e4ff; background: var(--surface); box-shadow: 0 3px 10px rgba(82, 91, 179, .045); }
+.btn-secondary:hover { color: var(--indigo); border-color: #d3d5f7; background: #f9f9ff; box-shadow: 0 5px 14px rgba(82, 91, 179, .09); }
+.cancel-btn { border: 1px solid var(--line); color: var(--slate); background: var(--pastel-blue); text-decoration: none; }
+.cancel-btn:hover { color: var(--slate); background: #e8efff; }
+.back-link { min-height: 40px; padding: 0 13px; display: inline-flex; align-items: center; border: 1px solid #e0e4ff; border-radius: var(--radius-button); color: var(--indigo); background: var(--surface); text-decoration: none; transition: background-color .18s ease, border-color .18s ease; }
+.back-link:hover { border-color: #d3d5f7; background: var(--pastel-indigo); text-decoration: none; }
+.btn:focus-visible, .submit-btn:focus-visible, .cancel-btn:focus-visible, .new-request-btn:focus-visible, .back-link:focus-visible, .modal-btn:focus-visible { outline: 3px solid rgba(90, 87, 230, .22); outline-offset: 2px; }
+.login-card, .register-card, .pret-card { padding: var(--card-padding); }
+
+input, select, textarea, button { font-family: var(--font); }
+#login-form input[type="text"], #login-form input[type="password"],
+.register-card .form-group input, .pret-card .form-group textarea,
+.pret-card .duration-input-wrapper input, .pret-card .pc-picker-trigger {
+  border-width: 1px;
+  border-style: solid;
+  border-color: var(--line);
+  border-radius: var(--radius-control);
+  color: var(--slate);
+  background: var(--surface);
+}
+.sidebar .search input { border-radius: var(--radius-control); font-size: 14px; }
+#login-form input[type="text"]:focus, #login-form input[type="password"]:focus,
+.register-card .form-group input:focus, .pret-card .form-group textarea:focus,
+.pret-card .duration-input-wrapper input:focus, .pret-card .pc-picker-trigger:focus-visible {
+  outline: none;
+  border-color: var(--indigo);
+  background: var(--surface);
+  box-shadow: var(--focus-ring);
+}
+
+.header-text h1 { color: var(--slate); font-size: var(--type-page-title); font-weight: 700; }
+.header-text p { color: var(--muted); font-size: 15px; line-height: 1.6; }
+.form-group label, .register-card .form-group label { color: var(--slate); font-size: 14px; font-weight: 600; }
+.form-group input, .form-group select, .form-group textarea { font-size: 14px; }
+.section-head h2, .loans-panel h2, .steps-section > h2 { color: var(--slate); font-size: var(--type-section-title); font-weight: 700; }
+.pc-card h3, .loan-block h3, .step-card h3 { color: var(--slate); font-size: var(--type-card-title); font-weight: 650; }
+
+.login-card, .register-card, .pret-card, .hero-card, .step-card, .pc-card, .loans-panel, .loan-block { border-color: var(--line); }
+.login-card input:focus-visible, .register-card .form-group input:focus-visible,
+.pret-card .form-group textarea:focus-visible, .pret-card .duration-input-wrapper input:focus-visible,
+.pret-card .pc-picker-trigger:focus-visible, .sidebar .search input:focus-visible {
+  outline: none;
+  border-color: var(--indigo);
+  box-shadow: var(--focus-ring);
+}
+
+@media (max-width: 480px) {
+  .brand-logo { width: 88px; height: 88px; flex-basis: 88px; }
+  .login-card, .register-card, .pret-card { padding: 24px 20px; }
+}
