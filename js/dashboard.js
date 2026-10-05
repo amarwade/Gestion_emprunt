@@ -26,16 +26,6 @@ document.addEventListener("DOMContentLoaded", async () => {
     container.replaceChildren(paragraph);
   }
 
-  // Gestion de la déconnexion
-  const logoutBtn = document.getElementById("logout-btn");
-  if (logoutBtn) {
-    logoutBtn.addEventListener("click", async () => {
-      try {
-        await fetch("/api/logout", { method: "POST", credentials: "same-origin" });
-      } catch (e) {}
-      localStorage.removeItem("eduloan_auth");
-      localStorage.removeItem("eduloan_user");
-      window.location.href = "login.html";
   function applyFilters() {
     grid?.querySelectorAll(".pc-card").forEach((card) => {
       const matchesFilter = currentFilter === "all" || card.dataset.status === currentFilter;
