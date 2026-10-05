@@ -41,6 +41,13 @@ Ouvrez votre navigateur et allez à:
 - **Connexion**: http://localhost:3000/login.html
 - **Mot de passe oublié**: http://localhost:3000/forgot-password.html
 
+Les PC et leurs disponibilités sont chargés depuis l'API. Les demandes sont
+conservées dans `data/demandes_pret.csv`. Leur statut est `en_attente`,
+`en_cours`, `refusee` ou `terminee` : une demande en attente réserve le PC,
+seul un prêt `en_cours` apparaît dans les emprunts actifs. Pour cette version
+sans écran d'administration, un responsable peut modifier le statut directement
+dans le CSV.
+
 ---
 
 ## 🧪 Tester la Connexion
@@ -104,12 +111,13 @@ Gestion_emprunt/
 │   ├── inscription.js        # Logique inscription
 │   └── dashboard.js          # Logique dashboard
 ├── data/
-│   └── etudiants.csv         # Base de données (CSV)
+│   ├── etudiants.csv         # Comptes étudiants
+│   └── demandes_pret.csv     # Demandes et statuts des prêts
 ├── assets/
 │   └── images/
 │       └── logo.png          # Logo EduLoan
-└── nginx/
-    └── nginx.conf            # (Optionnel - pour Docker)
+├── Dockerfile                # Serveur Express dans Docker
+└── docker-compose.yml
 ```
 
 ---

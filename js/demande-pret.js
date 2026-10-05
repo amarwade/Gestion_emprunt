@@ -1,35 +1,3 @@
-/**
- * Formulaire frontend de demande de prêt.
- * Les appareils ci-dessous reprennent les PC marqués « Disponible »
- * dans le catalogue de l'espace étudiant.
- */
-const AVAILABLE_PCS = [
-  {
-    id: "EL-1042",
-    name: "Dell Latitude 5440",
-    image: "assets/images/Dell Latitude 5440.png",
-    specs: ["16 Go RAM", "512 Go SSD", "Windows 11"]
-  },
-  {
-    id: "EL-1215",
-    name: "Lenovo ThinkPad E14",
-    image: "assets/images/Lenovo_ThinkPad_E14.png",
-    specs: ["16 Go RAM", "512 Go SSD", "Ubuntu 24.04"]
-  },
-  {
-    id: "EL-1302",
-    name: "Acer Aspire 5",
-    image: "assets/images/Acer_Aspire_5.png",
-    specs: ["8 Go RAM", "256 Go SSD", "Windows 11"]
-  },
-  {
-    id: "EL-1504",
-    name: "HP ProBook 450",
-    image: "assets/images/HP_ProBook_450.png",
-    specs: ["16 Go RAM", "1 To SSD", "Windows 11"]
-  }
-];
-
 document.addEventListener("DOMContentLoaded", () => {
   const form = document.getElementById("loan-form");
   const pcOptions = document.getElementById("pc-options");
@@ -43,6 +11,8 @@ document.addEventListener("DOMContentLoaded", () => {
   const fileUploadName = document.getElementById("file-upload-name");
   const globalError = document.getElementById("global-error");
   const globalInfo = document.getElementById("global-info");
+  let pcs = [];
+  let studentHasActiveRequest = false;
 
   function clearFieldError(id) {
     const error = document.getElementById(id);
@@ -82,6 +52,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
   function selectPc(pc) {
     if (!pcOptions || !pcPickerValue || !pcIdInput) return;
+    if (pc.status !== "disponible" || studentHasActiveRequest) return;
     pcIdInput.value = pc.id;
     pcPickerValue.replaceChildren();
 
@@ -104,17 +75,17 @@ document.addEventListener("DOMContentLoaded", () => {
     clearFieldError("error-pc");
   }
 
-  function renderPcOptions() {
+  function renderPcOptions(requestedPc = "") {
     if (!pcOptions || !pcPickerTrigger) return;
-    const requestedPc = new URLSearchParams(window.location.search).get("pc");
-
-    AVAILABLE_PCS.forEach((pc) => {
+    pcOptions.replaceChildren();
+    pcs.forEach((pc) => {
       const option = document.createElement("button");
       option.type = "button";
       option.className = "pc-option";
       option.setAttribute("role", "option");
       option.setAttribute("aria-selected", "false");
       option.dataset.pcId = pc.id;
+      option.disabled = pc.status !== "disponible" || studentHasActiveRequest;
 
       const image = document.createElement("img");
       image.className = "pc-option-image";
@@ -132,7 +103,7 @@ document.addEventListener("DOMContentLoaded", () => {
       id.textContent = pc.id;
       const specs = document.createElement("span");
       specs.className = "pc-option-specs";
-      specs.textContent = pc.specs.join(" · ");
+      specs.textContent = `${pc.specs.join(" · ")} · ${pc.statusLabel}`;
       const indicator = document.createElement("span");
       indicator.className = "pc-option-indicator";
       indicator.setAttribute("aria-hidden", "true");
@@ -144,11 +115,57 @@ document.addEventListener("DOMContentLoaded", () => {
       pcOptions.append(option);
     });
 
-    const preselectedPc = AVAILABLE_PCS.find((pc) => pc.id === requestedPc);
-    if (preselectedPc) selectPc(preselectedPc);
+    const preselectedPc = pcs.find((pc) => pc.id === requestedPc);
+    if (preselectedPc?.status === "disponible" && !studentHasActiveRequest) {
+      selectPc(preselectedPc);
+    } else if (requestedPc && preselectedPc && globalInfo) {
+      globalInfo.textContent = studentHasActiveRequest
+        ? "Vous avez déjà une demande en attente ou un emprunt en cours."
+        : "Le PC choisi n’est plus disponible. Sélectionnez un autre appareil.";
+      globalInfo.hidden = false;
+    }
+    pcPickerTrigger.disabled = pcs.every((pc) => pc.status !== "disponible") || studentHasActiveRequest;
   }
 
-  renderPcOptions();
+  async function loadPcOptions(showActiveRequestNotice = true) {
+    const requestedPc = new URLSearchParams(window.location.search).get("pc") || "";
+    pcPickerTrigger.disabled = true;
+    try {
+      const [pcsResponse, requestsResponse] = await Promise.all([
+        fetch("/api/pcs"),
+        fetch("/api/mes-emprunts")
+      ]);
+      const pcsResult = await pcsResponse.json();
+      const requestsResult = await requestsResponse.json();
+      if (requestsResponse.status === 401) {
+        window.location.href = "login.html?redirect=demande-pret.html";
+        return;
+      }
+      if (!pcsResponse.ok || !pcsResult.success) {
+        throw new Error(pcsResult.error || "Impossible de charger le catalogue.");
+      }
+      if (!requestsResponse.ok || !requestsResult.success) {
+        throw new Error(requestsResult.error || "Impossible de vérifier vos demandes.");
+      }
+      pcs = pcsResult.data;
+      studentHasActiveRequest = requestsResult.data.some((request) =>
+        request.statut === "en_attente" || request.statut === "en_cours"
+      );
+      renderPcOptions(requestedPc);
+      if (showActiveRequestNotice && studentHasActiveRequest && globalInfo) {
+        globalInfo.textContent = "Vous avez déjà une demande en attente ou un emprunt en cours. Vous pourrez déposer une nouvelle demande après sa clôture.";
+        globalInfo.hidden = false;
+      }
+    } catch (error) {
+      if (globalError) {
+        globalError.textContent = error.message;
+        globalError.hidden = false;
+      }
+      pcPickerTrigger.disabled = true;
+    }
+  }
+
+  loadPcOptions();
 
   pcPickerTrigger?.addEventListener("click", () => {
     const opening = pcOptions.hidden;
@@ -195,7 +212,7 @@ document.addEventListener("DOMContentLoaded", () => {
     clearMessages();
   });
 
-  form?.addEventListener("submit", (event) => {
+  form?.addEventListener("submit", async (event) => {
     event.preventDefault();
     clearMessages();
     clearFieldError("error-pc");
@@ -231,10 +248,60 @@ document.addEventListener("DOMContentLoaded", () => {
       return;
     }
 
-    if (globalInfo) {
-      globalInfo.textContent = "Votre formulaire est complet. La vérification de l’emprunt en cours et l’envoi seront activés avec le backend.";
-      globalInfo.hidden = false;
-      globalInfo.scrollIntoView({ behavior: "smooth", block: "nearest" });
+    const submitButton = form.querySelector('[type="submit"]');
+    if (submitButton) submitButton.disabled = true;
+
+    try {
+      const response = await fetch("/api/emprunts", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          pc_id: selectedPc,
+          motif,
+          duree_jours: duration
+        })
+      });
+      const result = await response.json();
+
+      if (!response.ok || !result.success) {
+        if (globalError) {
+          globalError.textContent = result.error || "La demande n’a pas pu être enregistrée.";
+          globalError.hidden = false;
+          globalError.scrollIntoView({ behavior: "smooth", block: "nearest" });
+        }
+        return;
+      }
+
+      if (globalInfo) {
+        globalInfo.textContent = result.message;
+        globalInfo.hidden = false;
+        globalInfo.scrollIntoView({ behavior: "smooth", block: "nearest" });
+      }
+      form.reset();
+      pcIdInput.value = "";
+      pcPickerValue.textContent = "Choisir un PC parmi les appareils disponibles";
+      pcPickerTrigger.classList.remove("has-selection");
+      pcOptions.querySelectorAll(".pc-option").forEach((option) => {
+        option.setAttribute("aria-selected", "false");
+        option.classList.remove("is-selected");
+      });
+      if (fileUploadName) {
+        fileUploadName.textContent = "";
+        fileUploadName.hidden = true;
+      }
+      await loadPcOptions(false);
+      if (globalInfo) {
+        globalInfo.textContent = result.message;
+        globalInfo.hidden = false;
+      }
+    } catch (error) {
+      if (globalError) {
+        globalError.textContent = "Impossible de joindre le serveur. Vérifiez qu’il est démarré puis réessayez.";
+        globalError.hidden = false;
+        globalError.scrollIntoView({ behavior: "smooth", block: "nearest" });
+      }
+    } finally {
+      if (submitButton) submitButton.disabled = false;
     }
   });
 });

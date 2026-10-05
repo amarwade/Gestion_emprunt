@@ -60,182 +60,32 @@
         <div class="pcs-area" id="pcs">
           <div class="section-head">
             <h2>PC disponibles</h2>
-            <div class="filters" role="tablist" aria-label="Filtrer les PC">
-              <button class="filter" type="button" data-filter="all">Tous</button>
-              <button class="filter is-active" type="button" data-filter="disponible">Disponibles</button>
-              <button class="filter" type="button" data-filter="emprunte">Empruntés</button>
+            <div class="filters" role="group" aria-label="Filtrer les PC">
+                <button class="filter" type="button" data-filter="all">Tous</button>
+                <button class="filter is-active" type="button" data-filter="disponible">Disponibles</button>
+                <button class="filter" type="button" data-filter="en_attente">En attente</button>
+                <button class="filter" type="button" data-filter="emprunte">Empruntés</button>
             </div>
-          </div>
 
-          <div class="pc-grid">
-            <article class="pc-card" data-status="disponible">
-              <div class="pc-card-top">
-                <div class="pc-icon">
-                  <img src="assets/images/Dell Latitude 5440.png" alt="Dell Latitude 5440" class="pc-img" />
-                </div>
-                <div>
-                  <div class="pc-id">EL-1042</div>
-                  <h3>Dell Latitude 5440</h3>
-                </div>
-              </div>
-              <div class="pc-specs">
-                <span>16 Go RAM</span>
-                <span>512 Go SSD</span>
-                <span>Windows 11</span>
-                <span class="acc-badge">Chargeur + Housse</span>
-              </div>
-              <div class="pc-card-foot">
-                <span class="availability ok"><span class="dot green"></span> Disponible</span>
-                <button class="voir-btn" type="button" data-pc="EL-1042">Voir</button>
-              </div>
-            </article>
-
-            <article class="pc-card" data-status="disponible">
-              <div class="pc-card-top">
-                <div class="pc-icon mint">
-                  <img src="assets/images/Lenovo_ThinkPad_E14.png" alt="Lenovo ThinkPad E14" class="pc-img" />
-                </div>
-                <div>
-                  <div class="pc-id">EL-1215</div>
-                  <h3>Lenovo ThinkPad E14</h3>
-                </div>
-              </div>
-              <div class="pc-specs">
-                <span>16 Go RAM</span>
-                <span>512 Go SSD</span>
-                <span>Ubuntu 24.04</span>
-                <span class="acc-badge">Chargeur + Souris</span>
-              </div>
-              <div class="pc-card-foot">
-                <span class="availability ok"><span class="dot green"></span> Disponible</span>
-                <button class="voir-btn" type="button" data-pc="EL-1215">Voir</button>
-              </div>
-            </article>
-
-            <article class="pc-card" data-status="emprunte">
-              <div class="pc-card-top">
-                <div class="pc-icon pink">
-                  <img src="assets/images/HP_EliteBook_840.png" alt="HP EliteBook 840" class="pc-img" />
-                </div>
-                <div>
-                  <div class="pc-id">EL-1108</div>
-                  <h3>HP EliteBook 840</h3>
-                </div>
-              </div>
-              <div class="pc-specs">
-                <span>8 Go RAM</span>
-                <span>256 Go SSD</span>
-                <span>Windows 11</span>
-                <span class="acc-badge">Chargeur + Housse</span>
-              </div>
-              <div class="pc-card-foot">
-                <span class="availability busy"><span class="dot indigo"></span> Emprunté</span>
-                <button class="voir-btn" type="button" data-pc="EL-1108">Voir</button>
-              </div>
-            </article>
-
-            <article class="pc-card" data-status="disponible">
-              <div class="pc-card-top">
-                <div class="pc-icon peach">
-                  <img src="assets/images/Acer_Aspire_5.png" alt="Acer Aspire 5" class="pc-img" />
-                </div>
-                <div>
-                  <div class="pc-id">EL-1302</div>
-                  <h3>Acer Aspire 5</h3>
-                </div>
-              </div>
-              <div class="pc-specs">
-                <span>8 Go RAM</span>
-                <span>256 Go SSD</span>
-                <span>Windows 11</span>
-                <span class="acc-badge">Chargeur inclus</span>
-              </div>
-              <div class="pc-card-foot">
-                <span class="availability ok"><span class="dot green"></span> Disponible</span>
-                <button class="voir-btn" type="button" data-pc="EL-1302">Voir</button>
-              </div>
-            </article>
-
-            <article class="pc-card" data-status="emprunte">
-              <div class="pc-card-top">
-                <div class="pc-icon">
-                  <img src="assets/images/Asus_VivoBook_15.png" alt="Asus VivoBook 15" class="pc-img" />
-                </div>
-                <div>
-                  <div class="pc-id">EL-1411</div>
-                  <h3>Asus VivoBook 15</h3>
-                </div>
-              </div>
-              <div class="pc-specs">
-                <span>16 Go RAM</span>
-                <span>512 Go SSD</span>
-                <span>Windows 11</span>
-                <span class="acc-badge">Chargeur + Housse</span>
-              </div>
-              <div class="pc-card-foot">
-                <span class="availability busy"><span class="dot indigo"></span> Emprunté</span>
-                <button class="voir-btn" type="button" data-pc="EL-1411">Voir</button>
-              </div>
-            </article>
-
-            <article class="pc-card" data-status="disponible">
-              <div class="pc-card-top">
-                <div class="pc-icon mint">
-                  <img src="assets/images/HP_ProBook_450.png" alt="HP ProBook 450" class="pc-img" />
-                </div>
-                <div>
-                  <div class="pc-id">EL-1504</div>
-                  <h3>HP ProBook 450</h3>
-                </div>
-              </div>
-              <div class="pc-specs">
-                <span>16 Go RAM</span>
-                <span>1 To SSD</span>
-                <span>Windows 11</span>
-                <span class="acc-badge">Chargeur + Sacoche</span>
-              </div>
-              <div class="pc-card-foot">
-                <span class="availability ok"><span class="dot green"></span> Disponible</span>
-                <button class="voir-btn" type="button" data-pc="EL-1504">Voir</button>
-              </div>
-            </article>
-          </div>
+            <div class="pc-grid" id="pc-grid" aria-live="polite">
+              <p class="catalog-message">Chargement du catalogue…</p>
+            </div>
         </div>
 
         <!-- Section Mes emprunts -->
         <aside class="loans-panel" id="emprunts">
           <div class="loans-head">
             <h2>Mes emprunts</h2>
-            <div class="deadline" aria-label="3 jours restants avant le retour">
-              <svg viewBox="0 0 72 72" width="72" height="72">
-                <circle cx="36" cy="36" r="28" fill="none" stroke="#e4e9f5" stroke-width="6"/>
-                <circle cx="36" cy="36" r="28" fill="none" stroke="#8aa4e8" stroke-width="6" stroke-linecap="round" stroke-dasharray="132 176" transform="rotate(-90 36 36)"/>
-              </svg>
-              <div class="deadline-label">
-                <strong>3 j</strong>
-                <small>restants</small>
-              </div>
-            </div>
           </div>
 
           <div class="loan-block">
-            <h3>Demandes d'emprunt récentes</h3>
-            <div class="group" id="recent-requests-container">
-              <div class="group-icon">
-                <img src="assets/images/Lenovo_ThinkPad_E14.png" alt="EL-1215 Lenovo" class="group-img" />
-              </div>
-              <div><b>EL-1215 Lenovo</b><span>Demande validée · labo info</span></div>
-            </div>
+            <h3>Demandes et historique</h3>
+            <div class="loan-list" id="requests-container" aria-live="polite">Chargement des demandes…</div>
           </div>
 
           <div class="loan-block">
-            <h3>Emprunt actif en cours</h3>
-            <div class="group">
-              <div class="group-icon mint">
-                <img src="assets/images/EL-1108_HP.png" alt="EL-1108 HP" class="group-img" />
-              </div>
-              <div><b>EL-1108 HP</b><span>En cours d'utilisation · CDI</span></div>
-            </div>
+            <h3>Emprunts en cours</h3>
+            <div class="loan-list" id="active-loans-container" aria-live="polite">Chargement des emprunts…</div>
           </div>
 
         </aside>

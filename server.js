@@ -6,9 +6,64 @@ const path = require('path');
 const app = express();
 const PORT = 3000;
 const CSV_FILE = path.join(__dirname, 'data', 'etudiants.csv');
+const LOAN_REQUESTS_FILE = path.join(__dirname, 'data', 'demandes_pret.csv');
+const LOAN_REQUESTS_HEADER = 'id;student_id;pc_id;motif;duree_jours;statut;date_demande\n';
+const PCS = [
+  {
+    id: 'EL-1042',
+    name: 'Dell Latitude 5440',
+    image: 'assets/images/Dell Latitude 5440.png',
+    specs: ['16 Go RAM', '512 Go SSD', 'Windows 11', 'Chargeur + Housse'],
+    style: ''
+  },
+  {
+    id: 'EL-1215',
+    name: 'Lenovo ThinkPad E14',
+    image: 'assets/images/Lenovo_ThinkPad_E14.png',
+    specs: ['16 Go RAM', '512 Go SSD', 'Ubuntu 24.04', 'Chargeur + Souris'],
+    style: 'mint'
+  },
+  {
+    id: 'EL-1108',
+    name: 'HP EliteBook 840',
+    image: 'assets/images/HP_EliteBook_840.png',
+    specs: ['8 Go RAM', '256 Go SSD', 'Windows 11', 'Chargeur + Housse'],
+    style: 'pink'
+  },
+  {
+    id: 'EL-1302',
+    name: 'Acer Aspire 5',
+    image: 'assets/images/Acer_Aspire_5.png',
+    specs: ['8 Go RAM', '256 Go SSD', 'Windows 11', 'Chargeur inclus'],
+    style: 'peach'
+  },
+  {
+    id: 'EL-1411',
+    name: 'Asus VivoBook 15',
+    image: 'assets/images/Asus_VivoBook_15.png',
+    specs: ['16 Go RAM', '512 Go SSD', 'Windows 11', 'Chargeur + Housse'],
+    style: ''
+  },
+  {
+    id: 'EL-1504',
+    name: 'HP ProBook 450',
+    image: 'assets/images/HP_ProBook_450.png',
+    specs: ['16 Go RAM', '1 To SSD', 'Windows 11', 'Chargeur + Sacoche'],
+    style: 'mint'
+  }
+];
+const ACTIVE_LOAN_STATUSES = new Set(['en_attente', 'en_cours']);
 
 // Middleware
 app.use(express.json());
+app.use('/data', (req, res) => res.sendStatus(404));
+app.use(express.static(__dirname, { extensions: ['html', 'htm'] }));
+
+// Redirections conviviales (avec ou sans .html)
+app.get('/login', (req, res) => res.sendFile(path.join(__dirname, 'login.html')));
+app.get('/inscription', (req, res) => res.sendFile(path.join(__dirname, 'inscription.html')));
+app.get('/demande-pret', (req, res) => res.sendFile(path.join(__dirname, 'demande-pret.html')));
+app.get('/espace-etudiant', (req, res) => res.sendFile(path.join(__dirname, 'espace-etudiant.html')));
 
 // Configuration des sessions
 app.use(session({
@@ -116,6 +171,51 @@ function getExistingStudentIds() {
     }
   }
   return existingIds;
+}
+
+function readLoanRequestsFromCSV() {
+  if (!fs.existsSync(LOAN_REQUESTS_FILE)) return [];
+  const lines = fs.readFileSync(LOAN_REQUESTS_FILE, 'utf8').split(/\r?\n/);
+  const requests = [];
+
+  for (let i = 1; i < lines.length; i++) {
+    const line = lines[i].trim();
+    if (!line) continue;
+    const parts = line.split(';');
+    if (parts.length >= 7) {
+      requests.push({
+        id: parts[0].trim(),
+        student_id: parts[1].trim(),
+        pc_id: parts[2].trim(),
+        motif: parts[3].trim(),
+        duree_jours: Number(parts[4]),
+        statut: parts[5].trim(),
+        date_demande: parts[6].trim()
+      });
+    }
+  }
+  return requests;
+}
+
+function getPcCatalogue() {
+  const requests = readLoanRequestsFromCSV();
+  const latestRequestByPc = new Map();
+  requests.forEach(request => latestRequestByPc.set(request.pc_id, request));
+
+  return PCS.map(pc => {
+    const latestRequest = latestRequestByPc.get(pc.id);
+    const status = latestRequest?.statut === 'en_attente'
+      ? 'en_attente'
+      : latestRequest?.statut === 'en_cours'
+        ? 'emprunte'
+        : 'disponible';
+    const statusLabel = status === 'en_attente'
+      ? 'Demande en attente'
+      : status === 'emprunte'
+        ? 'Emprunté'
+        : 'Disponible';
+    return { ...pc, status, statusLabel };
+  });
 }
 
 // ===== ROUTES API =====
@@ -301,6 +401,112 @@ app.post('/api/admin/accounts', requireAdministrator, (req, res) => {
     message: 'Compte créé avec succès.',
     data: { nom, prenom, student_id: studentId, role }
   });
+});
+
+// Route POST /api/emprunts - Enregistrer une demande de prêt dans le CSV
+app.post('/api/emprunts', (req, res) => {
+  if (!req.session.student) {
+    return res.status(401).json({
+      success: false,
+      error: 'Vous devez être connecté pour faire une demande.'
+    });
+  }
+
+  const { pc_id, motif, duree_jours } = req.body || {};
+  const cleanMotif = typeof motif === 'string' ? motif.trim() : '';
+  const duration = Number(duree_jours);
+
+  const pc = PCS.find(item => item.id === pc_id);
+  if (!pc) {
+    return res.status(400).json({
+      success: false,
+      error: 'Sélectionnez un PC valide du catalogue.'
+    });
+  }
+  if (cleanMotif.length < 5 || /[;\r\n]/.test(cleanMotif)) {
+    return res.status(400).json({
+      success: false,
+      error: 'Le motif doit contenir au moins 5 caractères et ne pas contenir de point-virgule ni de retour à la ligne.'
+    });
+  }
+  if (!Number.isInteger(duration) || duration < 1 || duration > 60) {
+    return res.status(400).json({
+      success: false,
+      error: 'La durée doit être un nombre entier compris entre 1 et 60 jours.'
+    });
+  }
+
+  const requests = readLoanRequestsFromCSV();
+  const studentId = req.session.student.student_id;
+  const studentHasActiveLoan = requests.some(request =>
+    request.student_id === studentId && ACTIVE_LOAN_STATUSES.has(request.statut)
+  );
+  if (studentHasActiveLoan) {
+    return res.status(409).json({
+      success: false,
+      error: 'Vous avez déjà une demande en attente ou un emprunt en cours.'
+    });
+  }
+
+  const pcStatus = getPcCatalogue().find(item => item.id === pc_id)?.status;
+  if (pcStatus !== 'disponible') {
+    return res.status(409).json({
+      success: false,
+      error: pcStatus === 'en_attente'
+        ? 'Ce PC fait déjà l’objet d’une demande en attente.'
+        : 'Ce PC est actuellement emprunté.'
+    });
+  }
+
+  const newRequest = {
+    id: `EM-${Date.now()}`,
+    student_id: studentId,
+    pc_id,
+    motif: cleanMotif,
+    duree_jours: duration,
+    statut: 'en_attente',
+    date_demande: new Date().toISOString()
+  };
+  const row = [
+    newRequest.id,
+    newRequest.student_id,
+    newRequest.pc_id,
+    newRequest.motif,
+    newRequest.duree_jours,
+    newRequest.statut,
+    newRequest.date_demande
+  ].join(';');
+
+  if (!fs.existsSync(LOAN_REQUESTS_FILE)) {
+    fs.writeFileSync(LOAN_REQUESTS_FILE, LOAN_REQUESTS_HEADER, 'utf8');
+  }
+  fs.appendFileSync(LOAN_REQUESTS_FILE, `${row}\n`, 'utf8');
+
+  return res.status(201).json({
+    success: true,
+    message: 'Votre demande de prêt a été enregistrée.',
+    data: newRequest
+  });
+});
+
+// Route GET /api/pcs - Catalogue et disponibilité calculée depuis le CSV
+app.get('/api/pcs', (req, res) => {
+  return res.status(200).json({ success: true, data: getPcCatalogue() });
+});
+
+// Route GET /api/mes-emprunts - Lister les demandes de l'étudiant connecté
+app.get('/api/mes-emprunts', (req, res) => {
+  if (!req.session.student) {
+    return res.status(401).json({
+      success: false,
+      error: 'Vous devez être connecté pour consulter vos demandes.'
+    });
+  }
+
+  const requests = readLoanRequestsFromCSV().filter(
+    request => request.student_id === req.session.student.student_id
+  );
+  return res.status(200).json({ success: true, data: requests });
 });
 
 // Route GET /api/forgot-password - Demande de récupération de mot de passe

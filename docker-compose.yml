@@ -6,6 +6,9 @@ services:
     container_name: emprunt-app
     restart: unless-stopped
     ports:
-      - "3000:3000"
+      - "8080:3000"
     volumes:
-      - ./data:/app/data
+      - eduloan_data:/app/data
+
+volumes:
+  eduloan_data:

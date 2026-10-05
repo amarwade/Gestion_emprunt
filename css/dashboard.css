@@ -229,6 +229,7 @@ body {
 
 .filters {
   display: flex;
+  flex-wrap: wrap;
   gap: 6px;
   background: #fff;
   border: 1px solid var(--line);
@@ -269,6 +270,13 @@ body {
 
 .pc-card.is-hidden {
   display: none;
+}
+
+.catalog-message {
+  grid-column: 1 / -1;
+  padding: 14px;
+  color: var(--muted);
+  font-size: 13px;
 }
 
 .pc-card-top {
@@ -439,6 +447,15 @@ body {
   margin-top: 12px;
 }
 
+.loan-list {
+  display: grid;
+  gap: 8px;
+}
+
+.loan-list .catalog-message {
+  padding: 4px 0;
+}
+
 .loan-block h3 {
   font-size: 12px;
   font-weight: 600;
@@ -593,6 +610,13 @@ body {
   font-size: 22px;
 }
 
+.modal-icon img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  border-radius: 8px;
+}
+
 .modal-id {
   font-size: 12px;
   font-weight: 600;
@@ -653,4 +677,3 @@ body {
 .modal-btn.primary:hover {
   background: var(--indigo-hover);
 }
-

@@ -133,21 +133,16 @@ document.addEventListener('DOMContentLoaded', () => {
       const studentId = studentIdInput.value.trim();
       const password = passwordInput.value;
 
-      // Le serveur vérifie le compte et le mot de passe dans data/etudiants.csv.
-      const apiUrl = window.location.port === '3000'
-        ? '/api/login'
-        : 'http://localhost:3000/api/login';
-
       try {
-        const response = await fetch(apiUrl, {
+        const response = await fetch('/api/login', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ student_id: studentId, password })
         });
         const result = await response.json();
 
-        if (!response.ok || !result.success || !result.data) {
-          showError(result.error || 'Identifiant ou mot de passe incorrect.');
+        if (!response.ok || !result.success) {
+          showError(result.error || 'La connexion a échoué.');
           resetButton();
           return;
         }
@@ -158,9 +153,14 @@ document.addEventListener('DOMContentLoaded', () => {
         showSuccess(`Bienvenue ${userData.prenom} ${userData.nom} ! Redirection...`);
         setTimeout(() => {
           window.location.href = userData.role === 'admin' ? 'admin.html' : 'espace-etudiant.html';
+          const requestedDestination = new URLSearchParams(window.location.search).get('redirect');
+          const destination = ['demande-pret.html', 'espace-etudiant.html'].includes(requestedDestination)
+            ? requestedDestination
+            : 'espace-etudiant.html';
+          window.location.href = destination;
         }, 1000);
       } catch (error) {
-        showError('Le serveur de connexion est inaccessible. Dans le dossier du projet, lancez « npm start », puis ouvrez http://localhost:3000 et réessayez.');
+        showError('Impossible de joindre le serveur. Vérifiez qu’il est démarré puis réessayez.');
         resetButton();
       }
     });
