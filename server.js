@@ -1,11 +1,16 @@
 const express = require('express');
 const session = require('express-session');
+const crypto = require('crypto');
 const fs = require('fs');
 const path = require('path');
 
 const app = express();
 const PORT = 3000;
 const CSV_FILE = path.join(__dirname, 'data', 'etudiants.csv');
+const LOANS_FILE = path.join(__dirname, 'data', 'emprunts.csv');
+const LOANS_CSV_HEADER = 'id;student_id;pc_id;motif;duree_jours;statut;date_demande\n';
+const AVAILABLE_PC_IDS = new Set(['EL-1042', 'EL-1215', 'EL-1302', 'EL-1504']);
+const ACTIVE_LOAN_STATUSES = new Set(['en_attente', 'en_cours']);
 
 // Middleware
 app.use(express.json());
@@ -49,7 +54,7 @@ app.use((req, res, next) => {
     res.setHeader('Cache-Control', 'no-store');
     return requireAdministrator(req, res, next);
   }
-  if (normalizedPath === '/data/etudiants.csv') {
+  if (normalizedPath === '/data/etudiants.csv' || normalizedPath === '/data/emprunts.csv') {
     return res.sendStatus(404);
   }
   next();
@@ -116,6 +121,30 @@ function getExistingStudentIds() {
     }
   }
   return existingIds;
+}
+
+function readLoansFromCSV() {
+  if (!fs.existsSync(LOANS_FILE)) return [];
+  const lines = fs.readFileSync(LOANS_FILE, 'utf8').split(/\r?\n/);
+  const loans = [];
+
+  for (let i = 1; i < lines.length; i++) {
+    const line = lines[i].trim();
+    if (!line) continue;
+    const parts = line.split(';');
+    if (parts.length >= 7) {
+      loans.push({
+        id: parts[0].trim(),
+        student_id: parts[1].trim(),
+        pc_id: parts[2].trim(),
+        motif: parts[3].trim(),
+        duree_jours: Number(parts[4]),
+        statut: parts[5].trim(),
+        date_demande: parts[6].trim()
+      });
+    }
+  }
+  return loans;
 }
 
 // ===== ROUTES API =====
@@ -300,6 +329,86 @@ app.post('/api/admin/accounts', requireAdministrator, (req, res) => {
     success: true,
     message: 'Compte créé avec succès.',
     data: { nom, prenom, student_id: studentId, role }
+  });
+});
+
+app.post('/api/emprunts', (req, res) => {
+  if (!req.session.student) {
+    return res.status(401).json({
+      success: false,
+      error: 'Connectez-vous pour envoyer une demande de prêt.'
+    });
+  }
+
+  const body = req.body || {};
+  const pcId = typeof body.pc_id === 'string' ? body.pc_id.trim() : '';
+  const motif = typeof body.motif === 'string' ? body.motif.trim() : '';
+  const duration = Number(body.duree_jours);
+
+  if (!AVAILABLE_PC_IDS.has(pcId)) {
+    return res.status(400).json({ success: false, error: 'Sélectionnez un PC valide du catalogue.' });
+  }
+  if (motif.length < 5 || /[;\r\n]/.test(motif)) {
+    return res.status(400).json({
+      success: false,
+      error: 'Le motif doit contenir au moins 5 caractères et ne pas contenir de point-virgule ni de retour à la ligne.'
+    });
+  }
+  if (!Number.isInteger(duration) || duration < 1 || duration > 60) {
+    return res.status(400).json({
+      success: false,
+      error: 'La durée doit être un nombre entier compris entre 1 et 60 jours.'
+    });
+  }
+
+  const loans = readLoansFromCSV();
+  const studentId = req.session.student.student_id;
+  if (loans.some(loan =>
+    loan.student_id === studentId && ACTIVE_LOAN_STATUSES.has(loan.statut)
+  )) {
+    return res.status(409).json({
+      success: false,
+      error: 'Vous avez déjà une demande en attente ou un emprunt en cours.'
+    });
+  }
+  if (loans.some(loan =>
+    loan.pc_id === pcId && ACTIVE_LOAN_STATUSES.has(loan.statut)
+  )) {
+    return res.status(409).json({
+      success: false,
+      error: 'Ce PC fait déjà l’objet d’une demande en attente ou d’un emprunt en cours.'
+    });
+  }
+
+  const loan = {
+    id: `EM-${Date.now()}-${crypto.randomBytes(4).toString('hex')}`,
+    student_id: studentId,
+    pc_id: pcId,
+    motif,
+    duree_jours: duration,
+    statut: 'en_attente',
+    date_demande: new Date().toISOString()
+  };
+  const row = [
+    loan.id,
+    loan.student_id,
+    loan.pc_id,
+    loan.motif,
+    loan.duree_jours,
+    loan.statut,
+    loan.date_demande
+  ].join(';');
+
+  fs.mkdirSync(path.dirname(LOANS_FILE), { recursive: true });
+  if (!fs.existsSync(LOANS_FILE) || fs.statSync(LOANS_FILE).size === 0) {
+    fs.writeFileSync(LOANS_FILE, LOANS_CSV_HEADER, 'utf8');
+  }
+  fs.appendFileSync(LOANS_FILE, `${row}\n`, 'utf8');
+
+  return res.status(201).json({
+    success: true,
+    message: 'Votre demande a été enregistrée dans le fichier CSV.',
+    data: loan
   });
 });
 

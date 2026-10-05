@@ -195,7 +195,7 @@ document.addEventListener("DOMContentLoaded", () => {
     clearMessages();
   });
 
-  form?.addEventListener("submit", (event) => {
+  form?.addEventListener("submit", async (event) => {
     event.preventDefault();
     clearMessages();
     clearFieldError("error-pc");
@@ -231,10 +231,40 @@ document.addEventListener("DOMContentLoaded", () => {
       return;
     }
 
-    if (globalInfo) {
-      globalInfo.textContent = "Votre formulaire est complet. La vérification de l’emprunt en cours et l’envoi seront activés avec le backend.";
-      globalInfo.hidden = false;
-      globalInfo.scrollIntoView({ behavior: "smooth", block: "nearest" });
+    const submitButton = form.querySelector('button[type="submit"]');
+    submitButton.disabled = true;
+    submitButton.textContent = "Enregistrement...";
+
+    try {
+      const response = await fetch("/api/emprunts", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "same-origin",
+        body: JSON.stringify({
+          pc_id: selectedPc,
+          motif,
+          duree_jours: duration
+        })
+      });
+      const result = await response.json();
+      if (!response.ok || !result.success) {
+        throw new Error(result.error || "Impossible d’enregistrer votre demande.");
+      }
+
+      if (globalInfo) {
+        globalInfo.textContent = `${result.message} Référence : ${result.data.id}.`;
+        globalInfo.hidden = false;
+        globalInfo.scrollIntoView({ behavior: "smooth", block: "nearest" });
+      }
+      submitButton.textContent = "Demande enregistrée";
+    } catch (error) {
+      if (globalError) {
+        globalError.textContent = error.message || "Impossible de joindre le serveur.";
+        globalError.hidden = false;
+        globalError.scrollIntoView({ behavior: "smooth", block: "nearest" });
+      }
+      submitButton.disabled = false;
+      submitButton.textContent = "Envoyer la demande";
     }
   });
 });

@@ -106,7 +106,9 @@ Gestion_emprunt/
 │   └── js/dashboard.js          ← Logique dashboard
 │
 ├── 💾 Base de données
-│   └── data/etudiants.csv       ← Fichier CSV avec étudiants
+│   └── data/
+│       ├── etudiants.csv        ← Fichier CSV avec étudiants
+│       └── emprunts.csv         ← Demandes de prêt enregistrées
 │
 ├── 🖼️  Ressources
 │   └── assets/images/           ← Images et logo
@@ -384,6 +386,11 @@ BENDAOU;Assia;2026120;sdfscsd;2026-09-25 14:56:18
 DIOP;Moussa;2026130;pass1234;2026-09-25 16:08:44
 ```
 
+Les demandes de prêt authentifiées sont ajoutées à `data/emprunts.csv` au
+format `id;student_id;pc_id;motif;duree_jours;statut;date_demande`. Elles sont
+créées avec le statut `en_attente`. Les statuts `refusee` et `terminee`
+libèrent le PC ; `en_attente` et `en_cours` le réservent.
+
 ---
 
 ## 📄 License
@@ -403,7 +410,7 @@ Développé pour le projet EduLoan de gestion d'emprunts de PC.
 - [ ] Intégrer une vraie base de données (MongoDB/PostgreSQL)
 - [ ] Hacher les mots de passe (bcrypt)
 - [ ] Ajouter 2FA (authentification deux facteurs)
-- [ ] Implémenter les emprunts de PC
+- [ ] Ajouter une interface d’administration pour traiter les demandes de prêt
 - [ ] Dashboard complet avec historique
 - [ ] Admin panel pour gérer les étudiants
 - [ ] Email notifications

@@ -104,13 +104,20 @@ Gestion_emprunt/
 │   ├── inscription.js        # Logique inscription
 │   └── dashboard.js          # Logique dashboard
 ├── data/
-│   └── etudiants.csv         # Base de données (CSV)
+│   ├── etudiants.csv         # Comptes étudiants
+│   └── emprunts.csv          # Demandes de prêt et statuts
 ├── assets/
 │   └── images/
 │       └── logo.png          # Logo EduLoan
 └── nginx/
     └── nginx.conf            # (Optionnel - pour Docker)
 ```
+
+Les demandes envoyées par un étudiant connecté sont enregistrées dans
+`data/emprunts.csv` avec le statut initial `en_attente`. Les données sont
+conservées après le redémarrage du serveur. En attendant une interface de
+gestion, les statuts peuvent être modifiés directement dans le CSV. Les
+colonnes sont séparées par des points-virgules.
 
 ---
 
