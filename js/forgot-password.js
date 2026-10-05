@@ -85,7 +85,11 @@ document.addEventListener('DOMContentLoaded', () => {
     document.querySelector('.btn-loader').style.display = 'inline-flex';
 
     try {
-      const response = await fetch('/api/forgot-password', {
+      const apiUrl = window.location.port === '3000'
+        ? '/api/forgot-password'
+        : 'http://localhost:3000/api/forgot-password';
+
+      const response = await fetch(apiUrl, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
@@ -100,28 +104,13 @@ document.addEventListener('DOMContentLoaded', () => {
       const data = await response.json();
 
       if (response.ok && data.success) {
-        // Succès
-        let successMessage = data.message;
-        if (data.password) {
-          successMessage += `\n\nVotre mot de passe: ${data.password}`;
-        }
-        
-        globalSuccess.innerHTML = `
-          <strong>Succès !</strong><br>
-          ${data.message}<br><br>
-          <code style="background: rgba(0,0,0,0.1); padding: 8px 12px; border-radius: 6px; display: inline-block;">
-            ${data.password}
-          </code>
-        `;
+        globalSuccess.textContent = data.password
+          ? `Votre mot de passe est : ${data.password}`
+          : (data.message || 'Les informations de récupération ont été validées.');
         globalSuccess.style.display = 'block';
 
-        // Remplir les champs
         form.reset();
-        
-        // Rediriger après 3 secondes
-        setTimeout(() => {
-          window.location.href = 'login.html';
-        }, 3000);
+        resetButton();
       } else {
         // Erreur
         showError(data.error || 'Erreur lors de la récupération du mot de passe.');
@@ -129,7 +118,7 @@ document.addEventListener('DOMContentLoaded', () => {
       }
     } catch (err) {
       console.error('Erreur:', err);
-      showError('Erreur serveur. Veuillez réessayer.');
+      showError('Le serveur de récupération est inaccessible. Lancez « npm start » ou vérifiez que Docker fonctionne sur http://localhost:3000, puis réessayez.');
       resetButton();
     }
   });

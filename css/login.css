@@ -117,6 +117,10 @@ body {
   margin-bottom: 24px;
 }
 
+#forgot-password-form {
+  margin-bottom: 16px;
+}
+
 .form-group {
   margin-bottom: 20px;
 }
@@ -134,7 +138,8 @@ body {
 }
 
 #login-form input[type="text"],
-#login-form input[type="password"] {
+#login-form input[type="password"],
+#forgot-password-form input[type="text"] {
   width: 100%;
   padding: 12px 16px;
   border: 2px solid var(--border-color);
@@ -146,19 +151,22 @@ body {
 }
 
 #login-form input[type="text"]:focus,
-#login-form input[type="password"]:focus {
+#login-form input[type="password"]:focus,
+#forgot-password-form input[type="text"]:focus {
   outline: none;
   border-color: var(--primary-color);
   box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
 }
 
 #login-form input[type="text"]:invalid ~ .field-error,
-#login-form input[type="password"]:invalid ~ .field-error {
+#login-form input[type="password"]:invalid ~ .field-error,
+#forgot-password-form input[type="text"]:invalid ~ .field-error {
   color: var(--error-color);
 }
 
 #login-form input[type="text"].error,
-#login-form input[type="password"].error {
+#login-form input[type="password"].error,
+#forgot-password-form input[type="text"].error {
   border-color: var(--error-color);
   background: rgba(239, 68, 68, 0.02);
 }

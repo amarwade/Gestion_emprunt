@@ -1,6 +1,10 @@
 // ===== GESTION DU FORMULAIRE DE CONNEXION (SIMULATION FRONTEND & BACKEND HYBRIDE) =====
 
 document.addEventListener('DOMContentLoaded', () => {
+  // Invalider toute ancienne authentification locale avant une nouvelle tentative.
+  localStorage.removeItem('eduloan_auth');
+  localStorage.removeItem('eduloan_user');
+
   const form = document.getElementById('login-form');
   const studentIdInput = document.getElementById('student_id');
   const passwordInput = document.getElementById('password');
