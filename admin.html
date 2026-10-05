@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>EduLoan — Administration</title>
+  <link rel="stylesheet" href="css/theme.css" />
+  <link rel="stylesheet" href="css/admin.css" />
+</head>
+<body>
+  <main class="admin-shell">
+    <header class="admin-header">
+      <div>
+        <p class="eyebrow">EduLoan · Administration</p>
+        <h1>Gestion des comptes</h1>
+        <p id="admin-welcome">Espace réservé aux administrateurs.</p>
+      </div>
+      <button id="logout-btn" class="button button-secondary" type="button">Déconnexion</button>
+    </header>
+
+    <section class="panel" aria-labelledby="create-heading">
+      <h2 id="create-heading">Créer un compte</h2>
+      <p class="muted">Les identifiants doivent contenir 7 chiffres et le mot de passe au moins 8 caractères.</p>
+      <form id="account-form">
+        <label>Nom<input name="nom" required autocomplete="family-name" /></label>
+        <label>Prénom<input name="prenom" required autocomplete="given-name" /></label>
+        <label>Identifiant étudiant<input name="student_id" required inputmode="numeric" pattern="[0-9]{7}" maxlength="7" /></label>
+        <label>Mot de passe<input name="password" required type="password" minlength="8" autocomplete="new-password" /></label>
+        <label>Rôle
+          <select name="role" required>
+            <option value="etudiant">Étudiant</option>
+            <option value="admin">Administrateur</option>
+          </select>
+        </label>
+        <button class="button button-primary" type="submit" id="create-btn">Créer le compte</button>
+      </form>
+      <p id="form-message" class="notice" hidden role="status"></p>
+    </section>
+
+    <section class="panel" aria-labelledby="accounts-heading">
+      <div class="section-heading">
+        <div>
+          <h2 id="accounts-heading">Comptes existants</h2>
+          <p class="muted">Les mots de passe ne sont jamais affichés dans cette liste.</p>
+        </div>
+        <button id="refresh-btn" class="button button-secondary" type="button">Actualiser</button>
+      </div>
+      <p id="list-message" class="muted" role="status"></p>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Identifiant</th><th>Nom</th><th>Prénom</th><th>Rôle</th><th>Inscription</th></tr></thead>
+          <tbody id="accounts-list"></tbody>
+        </table>
+      </div>
+    </section>
+  </main>
+  <script src="js/admin.js?v=1"></script>
+</body>
+</html>

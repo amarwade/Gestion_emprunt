@@ -38,10 +38,13 @@ document.addEventListener("DOMContentLoaded", () => {
   // Gestion de la déconnexion
   const logoutBtn = document.getElementById("logout-btn");
   if (logoutBtn) {
-    logoutBtn.addEventListener("click", () => {
+    logoutBtn.addEventListener("click", async () => {
+      try {
+        await fetch("/api/logout", { method: "POST", credentials: "same-origin" });
+      } catch (e) {}
       localStorage.removeItem("eduloan_auth");
       localStorage.removeItem("eduloan_user");
-      window.location.href = "index.html";
+      window.location.href = "login.html";
     });
   }
 

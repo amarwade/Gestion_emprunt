@@ -9,13 +9,6 @@ const CSV_FILE = path.join(__dirname, 'data', 'etudiants.csv');
 
 // Middleware
 app.use(express.json());
-app.use(express.static(__dirname, { extensions: ['html', 'htm'] }));
-
-// Redirections conviviales (avec ou sans .html)
-app.get('/login', (req, res) => res.sendFile(path.join(__dirname, 'login.html')));
-app.get('/inscription', (req, res) => res.sendFile(path.join(__dirname, 'inscription.html')));
-app.get('/demande-pret', (req, res) => res.sendFile(path.join(__dirname, 'demande-pret.html')));
-app.get('/espace-etudiant', (req, res) => res.sendFile(path.join(__dirname, 'espace-etudiant.html')));
 
 // Configuration des sessions
 app.use(session({
@@ -28,6 +21,47 @@ app.use(session({
     maxAge: 24 * 60 * 60 * 1000 // 24 heures
   }
 }));
+
+function isAdministrator(req) {
+  return req.session.student && req.session.student.role === 'admin';
+}
+
+function requireAdministrator(req, res, next) {
+  if (!isAdministrator(req)) {
+    if (req.path.startsWith('/api/')) {
+      return res.status(403).json({ success: false, error: 'Accès réservé aux administrateurs.' });
+    }
+    if (req.session.student) return res.status(403).send('Accès réservé aux administrateurs.');
+    return res.redirect('/login.html');
+  }
+  next();
+}
+
+// Bloquer l'accès direct aux pages admin et au fichier contenant les mots de passe.
+app.use((req, res, next) => {
+  let normalizedPath;
+  try {
+    normalizedPath = decodeURIComponent(req.path).replace(/\/+$/, '').toLowerCase();
+  } catch {
+    return res.sendStatus(400);
+  }
+  if (normalizedPath === '/admin' || normalizedPath === '/admin.html') {
+    res.setHeader('Cache-Control', 'no-store');
+    return requireAdministrator(req, res, next);
+  }
+  if (normalizedPath === '/data/etudiants.csv') {
+    return res.sendStatus(404);
+  }
+  next();
+});
+
+app.use(express.static(__dirname, { extensions: ['html', 'htm'] }));
+
+// Redirections conviviales (avec ou sans .html)
+app.get('/login', (req, res) => res.sendFile(path.join(__dirname, 'login.html')));
+app.get('/inscription', (req, res) => res.sendFile(path.join(__dirname, 'inscription.html')));
+app.get('/demande-pret', (req, res) => res.sendFile(path.join(__dirname, 'demande-pret.html')));
+app.get('/espace-etudiant', (req, res) => res.sendFile(path.join(__dirname, 'espace-etudiant.html')));
 
 // Formater la date en YYYY-MM-DD HH:mm:ss
 function formatDate(date) {
@@ -58,7 +92,8 @@ function readStudentsFromCSV() {
         prenom: parts[1].trim(),
         student_id: parts[2].trim(),
         password: parts[3].trim(),
-        dateInscription: parts[4].trim()
+        dateInscription: parts[4].trim(),
+        role: (parts[5] || 'etudiant').trim().toLowerCase()
       });
     }
   }
@@ -118,6 +153,7 @@ app.post('/api/login', (req, res) => {
     student_id: student.student_id,
     nom: student.nom,
     prenom: student.prenom,
+    role: student.role,
     dateConnexion: new Date()
   };
 
@@ -129,7 +165,8 @@ app.post('/api/login', (req, res) => {
     data: {
       student_id: student.student_id,
       nom: student.nom,
-      prenom: student.prenom
+      prenom: student.prenom,
+      role: student.role
     }
   });
 });
@@ -205,7 +242,7 @@ app.post('/api/inscription', (req, res) => {
 
   // Formater la nouvelle ligne CSV : Nom;Prénom;Identifiant;MotDePasse;DateInscription
   const dateStr = formatDate(new Date());
-  const newRow = `${nom};${prenom};${student_id};${password};${dateStr}\n`;
+  const newRow = `${nom};${prenom};${student_id};${password};${dateStr};etudiant\n`;
 
   // Écrire la nouvelle ligne dans data/etudiants.csv
   fs.appendFileSync(CSV_FILE, newRow, 'utf8');
@@ -216,6 +253,53 @@ app.post('/api/inscription', (req, res) => {
     success: true,
     message: 'Inscription réussie !',
     data: { nom, prenom, student_id }
+  });
+});
+
+// Gestion des comptes réservée aux administrateurs.
+app.get('/api/admin/accounts', requireAdministrator, (req, res) => {
+  const accounts = readStudentsFromCSV().map(({ nom, prenom, student_id, role, dateInscription }) => ({
+    nom,
+    prenom,
+    student_id,
+    role,
+    dateInscription
+  }));
+  return res.json({ success: true, data: accounts });
+});
+
+app.post('/api/admin/accounts', requireAdministrator, (req, res) => {
+  const nom = String(req.body.nom || '').trim();
+  const prenom = String(req.body.prenom || '').trim();
+  const studentId = String(req.body.student_id || '').trim();
+  const password = String(req.body.password || '');
+  const role = String(req.body.role || 'etudiant').trim().toLowerCase();
+
+  if (!nom || !prenom || !studentId || !password) {
+    return res.status(400).json({ success: false, error: 'Tous les champs sont obligatoires.' });
+  }
+  if (!/^\d{7}$/.test(studentId)) {
+    return res.status(400).json({ success: false, error: 'L’identifiant doit contenir 7 chiffres.' });
+  }
+  if (password.length < 8) {
+    return res.status(400).json({ success: false, error: 'Le mot de passe doit contenir au moins 8 caractères.' });
+  }
+  if (!['etudiant', 'admin'].includes(role)) {
+    return res.status(400).json({ success: false, error: 'Le rôle doit être étudiant ou administrateur.' });
+  }
+  if ([nom, prenom, studentId, password].some(value => /[;\r\n]/.test(value))) {
+    return res.status(400).json({ success: false, error: 'Les champs ne peuvent pas contenir de point-virgule ou de retour à la ligne.' });
+  }
+  if (getExistingStudentIds().includes(studentId)) {
+    return res.status(409).json({ success: false, error: 'Un compte existe déjà avec cet identifiant.' });
+  }
+
+  const newRow = `${nom};${prenom};${studentId};${password};${formatDate(new Date())};${role}\n`;
+  fs.appendFileSync(CSV_FILE, newRow, 'utf8');
+  return res.status(201).json({
+    success: true,
+    message: 'Compte créé avec succès.',
+    data: { nom, prenom, student_id: studentId, role }
   });
 });
 
