@@ -17,10 +17,22 @@ const AVAILABLE_PCS = [
     specs: ["16 Go RAM", "512 Go SSD", "Ubuntu 24.04"]
   },
   {
+    id: "EL-1108",
+    name: "HP EliteBook 840",
+    image: "assets/images/HP_EliteBook_840.png",
+    specs: ["8 Go RAM", "256 Go SSD", "Windows 11"]
+  },
+  {
     id: "EL-1302",
     name: "Acer Aspire 5",
     image: "assets/images/Acer_Aspire_5.png",
     specs: ["8 Go RAM", "256 Go SSD", "Windows 11"]
+  },
+  {
+    id: "EL-1411",
+    name: "Asus VivoBook 15",
+    image: "assets/images/Asus_VivoBook_15.png",
+    specs: ["16 Go RAM", "512 Go SSD", "Windows 11"]
   },
   {
     id: "EL-1504",
@@ -104,11 +116,11 @@ document.addEventListener("DOMContentLoaded", () => {
     clearFieldError("error-pc");
   }
 
-  function renderPcOptions() {
+  function renderPcOptions(availablePcs) {
     if (!pcOptions || !pcPickerTrigger) return;
     const requestedPc = new URLSearchParams(window.location.search).get("pc");
 
-    AVAILABLE_PCS.forEach((pc) => {
+    availablePcs.forEach((pc) => {
       const option = document.createElement("button");
       option.type = "button";
       option.className = "pc-option";
@@ -144,11 +156,42 @@ document.addEventListener("DOMContentLoaded", () => {
       pcOptions.append(option);
     });
 
-    const preselectedPc = AVAILABLE_PCS.find((pc) => pc.id === requestedPc);
+    const preselectedPc = availablePcs.find((pc) => pc.id === requestedPc);
     if (preselectedPc) selectPc(preselectedPc);
   }
 
-  renderPcOptions();
+  async function loadAvailablePcs() {
+    pcPickerTrigger.disabled = true;
+    try {
+      const response = await fetch("/api/pcs");
+      const result = await response.json();
+      if (!response.ok || !result.success) {
+        throw new Error(result.error || "Impossible de charger les disponibilités.");
+      }
+      const availableIds = new Set(
+        result.data.filter((pc) => pc.status === "disponible").map((pc) => pc.id)
+      );
+      const availablePcs = AVAILABLE_PCS.filter((pc) => availableIds.has(pc.id));
+      renderPcOptions(availablePcs);
+      pcPickerTrigger.disabled = availablePcs.length === 0;
+      if (!availablePcs.length && globalInfo) {
+        globalInfo.textContent = "Aucun PC n’est disponible pour le moment.";
+        globalInfo.hidden = false;
+      }
+      if (requestedPc && !availableIds.has(requestedPc) && globalInfo) {
+        globalInfo.textContent = "Le PC choisi n’est plus disponible. Sélectionnez un autre appareil.";
+        globalInfo.hidden = false;
+      }
+    } catch (error) {
+      if (globalError) {
+        globalError.textContent = error.message;
+        globalError.hidden = false;
+      }
+    }
+  }
+
+  const requestedPc = new URLSearchParams(window.location.search).get("pc");
+  loadAvailablePcs();
 
   pcPickerTrigger?.addEventListener("click", () => {
     const opening = pcOptions.hidden;

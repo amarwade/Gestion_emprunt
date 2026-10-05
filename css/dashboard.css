@@ -446,9 +446,14 @@ body {
   margin-bottom: 8px;
 }
 
+.loan-list {
+  display: grid;
+  gap: 8px;
+}
+
 .group {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   gap: 12px;
   background: #fff;
   border-radius: 14px;
@@ -498,8 +503,14 @@ body {
 }
 
 .group span {
+  display: block;
   font-size: 11.5px;
   color: var(--muted);
+  overflow-wrap: anywhere;
+}
+
+.group span + span {
+  margin-top: 4px;
 }
 
 /* Titres de l'espace étudiant : slate foncé, sans assombrir les textes secondaires. */
@@ -653,4 +664,3 @@ body {
 .modal-btn.primary:hover {
   background: var(--indigo-hover);
 }
-

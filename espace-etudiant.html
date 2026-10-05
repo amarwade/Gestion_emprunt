@@ -7,7 +7,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="css/dashboard.css?v=5" />
+  <link rel="stylesheet" href="css/dashboard.css?v=6" />
   <link rel="stylesheet" href="css/theme.css" />
 </head>
 <body>
@@ -63,6 +63,7 @@
             <div class="filters" role="tablist" aria-label="Filtrer les PC">
               <button class="filter" type="button" data-filter="all">Tous</button>
               <button class="filter is-active" type="button" data-filter="disponible">Disponibles</button>
+              <button class="filter" type="button" data-filter="en_attente">En attente</button>
               <button class="filter" type="button" data-filter="emprunte">Empruntés</button>
             </div>
           </div>
@@ -206,36 +207,16 @@
         <aside class="loans-panel" id="emprunts">
           <div class="loans-head">
             <h2>Mes emprunts</h2>
-            <div class="deadline" aria-label="3 jours restants avant le retour">
-              <svg viewBox="0 0 72 72" width="72" height="72">
-                <circle cx="36" cy="36" r="28" fill="none" stroke="#e4e9f5" stroke-width="6"/>
-                <circle cx="36" cy="36" r="28" fill="none" stroke="#8aa4e8" stroke-width="6" stroke-linecap="round" stroke-dasharray="132 176" transform="rotate(-90 36 36)"/>
-              </svg>
-              <div class="deadline-label">
-                <strong>3 j</strong>
-                <small>restants</small>
-              </div>
-            </div>
           </div>
 
           <div class="loan-block">
             <h3>Demandes d'emprunt récentes</h3>
-            <div class="group" id="recent-requests-container">
-              <div class="group-icon">
-                <img src="assets/images/Lenovo_ThinkPad_E14.png" alt="EL-1215 Lenovo" class="group-img" />
-              </div>
-              <div><b>EL-1215 Lenovo</b><span>Demande validée · labo info</span></div>
-            </div>
+            <div class="loan-list" id="recent-requests-container" aria-live="polite">Chargement des demandes…</div>
           </div>
 
           <div class="loan-block">
             <h3>Emprunt actif en cours</h3>
-            <div class="group">
-              <div class="group-icon mint">
-                <img src="assets/images/EL-1108_HP.png" alt="EL-1108 HP" class="group-img" />
-              </div>
-              <div><b>EL-1108 HP</b><span>En cours d'utilisation · CDI</span></div>
-            </div>
+            <div class="loan-list" id="active-loans-container" aria-live="polite">Chargement des emprunts…</div>
           </div>
 
         </aside>
@@ -243,6 +224,6 @@
     </main>
   </div>
 
-  <script src="js/dashboard.js"></script>
+  <script src="js/dashboard.js?v=2"></script>
 </body>
 </html>

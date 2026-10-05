@@ -9,7 +9,7 @@ const PORT = 3000;
 const CSV_FILE = path.join(__dirname, 'data', 'etudiants.csv');
 const LOANS_FILE = path.join(__dirname, 'data', 'emprunts.csv');
 const LOANS_CSV_HEADER = 'id;student_id;pc_id;motif;duree_jours;statut;date_demande\n';
-const AVAILABLE_PC_IDS = new Set(['EL-1042', 'EL-1215', 'EL-1302', 'EL-1504']);
+const AVAILABLE_PC_IDS = new Set(['EL-1042', 'EL-1215', 'EL-1108', 'EL-1302', 'EL-1411', 'EL-1504']);
 const ACTIVE_LOAN_STATUSES = new Set(['en_attente', 'en_cours']);
 
 // Middleware
@@ -145,6 +145,19 @@ function readLoansFromCSV() {
     }
   }
   return loans;
+}
+
+function getPcStatuses() {
+  const latestLoanByPc = new Map();
+  readLoansFromCSV().forEach(loan => latestLoanByPc.set(loan.pc_id, loan));
+
+  return Array.from(AVAILABLE_PC_IDS, id => {
+    const latestLoan = latestLoanByPc.get(id);
+    const status = latestLoan && ACTIVE_LOAN_STATUSES.has(latestLoan.statut)
+      ? latestLoan.statut
+      : 'disponible';
+    return { id, status };
+  });
 }
 
 // ===== ROUTES API =====
@@ -330,6 +343,24 @@ app.post('/api/admin/accounts', requireAdministrator, (req, res) => {
     message: 'Compte créé avec succès.',
     data: { nom, prenom, student_id: studentId, role }
   });
+});
+
+app.get('/api/pcs', (req, res) => {
+  return res.json({ success: true, data: getPcStatuses() });
+});
+
+app.get('/api/mes-emprunts', (req, res) => {
+  if (!req.session.student) {
+    return res.status(401).json({
+      success: false,
+      error: 'Connectez-vous pour consulter vos demandes.'
+    });
+  }
+
+  const loans = readLoansFromCSV()
+    .filter(loan => loan.student_id === req.session.student.student_id)
+    .sort((a, b) => b.date_demande.localeCompare(a.date_demande));
+  return res.json({ success: true, data: loans });
 });
 
 app.post('/api/emprunts', (req, res) => {

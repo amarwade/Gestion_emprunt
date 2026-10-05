@@ -1,38 +1,35 @@
-document.addEventListener("DOMContentLoaded", () => {
-  // 1. Simulation de contrôle d'accès (Authentification frontend)
-  const isAuth = localStorage.getItem("eduloan_auth") === "true";
-  if (!isAuth) {
-    // Rediriger vers la page de connexion si non connecté
-    window.location.href = "login.html?redirect=espace-etudiant.html";
+document.addEventListener("DOMContentLoaded", async () => {
+  const requestsContainer = document.getElementById("recent-requests-container");
+  const activeLoansContainer = document.getElementById("active-loans-container");
+  const pcGrid = document.querySelector(".pc-grid");
+  let sessionResult;
+
+  try {
+    const response = await fetch("/api/check-session");
+    sessionResult = await response.json();
+    if (!response.ok || !sessionResult.authenticated) {
+      window.location.href = "login.html?redirect=espace-etudiant.html";
+      return;
+    }
+  } catch (error) {
+    [requestsContainer, activeLoansContainer].forEach((container) => {
+      if (container) container.textContent = "Impossible de vérifier la session.";
+    });
     return;
   }
 
-  // Afficher les infos de l'étudiant connecté
-  const userJson = localStorage.getItem("eduloan_user");
-  if (userJson) {
-    try {
-      const user = JSON.parse(userJson);
-      const welcomeUser = document.getElementById("welcome-user");
-      const userAvatar = document.getElementById("user-avatar");
-      const firstName = user.prenom || user.firstName || "";
-      const lastName = user.nom || user.lastName || "";
-      const storedName = user.fullName || user.full_name || user.name || [firstName, lastName].filter(Boolean).join(" ");
-      const isGenericFallback = firstName === "EduLoan" && lastName === "Étudiant";
-      const displayName = isGenericFallback
-        ? (user.student_id ? "Étudiant " + user.student_id : "Étudiant")
-        : (storedName || user.student_id || "Étudiant");
-
-      if (welcomeUser) {
-        welcomeUser.textContent = "Bonjour, " + displayName;
-      }
-      if (userAvatar) {
-        const initials = displayName.split(/\s+/).filter(Boolean).slice(0, 2).map((part) => part[0]).join("");
-        userAvatar.textContent = initials.toUpperCase() || "ET";
-        userAvatar.setAttribute("aria-label", "Profil de " + displayName);
-      }
-    } catch (e) {
-      console.warn("Erreur lecture session", e);
-    }
+  const student = sessionResult.student;
+  if (!student) {
+    window.location.href = "login.html?redirect=espace-etudiant.html";
+    return;
+  }
+  const displayName = [student.prenom, student.nom].filter(Boolean).join(" ") || student.student_id;
+  const welcomeUser = document.getElementById("welcome-user");
+  const userAvatar = document.getElementById("user-avatar");
+  if (welcomeUser) welcomeUser.textContent = "Bonjour, " + displayName;
+  if (userAvatar) {
+    userAvatar.textContent = displayName.split(/\s+/).map((part) => part[0]).join("").toUpperCase();
+    userAvatar.setAttribute("aria-label", "Profil de " + displayName);
   }
 
   // Gestion de la déconnexion
@@ -165,23 +162,132 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   });
 
-  // 4. Affichage dynamique des demandes enregistrées en localStorage
-  try {
-    const storedRequests = JSON.parse(localStorage.getItem("eduloan_demandes_pret") || "[]");
-    const container = document.getElementById("recent-requests-container");
-    if (container && storedRequests.length > 0) {
-      const latest = storedRequests[storedRequests.length - 1];
-      container.innerHTML = `
-        <div class="group-icon mint">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#10b981" stroke-width="2"><path d="M20 6L9 17l-5-5"/></svg>
-        </div>
-        <div>
-          <b>${latest.pcModel || latest.pcId || "PC Portable"}</b>
-          <span>Demande en attente · ${latest.dureeLabel || latest.duree}</span>
-        </div>
-      `;
+  // 4. Charger la disponibilité réelle et les demandes du compte connecté.
+  function renderLoans(container, loans, emptyText, includeStatus) {
+    if (!container) return;
+    container.replaceChildren();
+    if (!loans.length) {
+      const emptyMessage = document.createElement("p");
+      emptyMessage.className = "catalog-message";
+      emptyMessage.textContent = emptyText;
+      container.append(emptyMessage);
+      return;
     }
-  } catch (e) {}
+
+    loans.forEach((loan) => {
+      const card = document.querySelector(`.pc-card[data-pc-id="${loan.pc_id}"]`);
+      const group = document.createElement("div");
+      group.className = "group";
+      const icon = document.createElement("div");
+      icon.className = "group-icon";
+      const image = card?.querySelector(".pc-img");
+      if (image) {
+        const thumbnail = document.createElement("img");
+        thumbnail.src = image.getAttribute("src");
+        thumbnail.alt = "";
+        thumbnail.className = "group-img";
+        icon.append(thumbnail);
+      }
+
+      const details = document.createElement("div");
+      const title = document.createElement("b");
+      title.textContent = `${loan.pc_id} · ${card?.querySelector("h3")?.textContent || "PC portable"}`;
+      const statusLabels = {
+        en_attente: "En attente",
+        en_cours: "En cours",
+        refusee: "Refusée",
+        terminee: "Terminée"
+      };
+      const status = statusLabels[loan.statut] || loan.statut;
+      const date = new Date(loan.date_demande);
+      const formattedDate = Number.isNaN(date.getTime())
+        ? loan.date_demande
+        : new Intl.DateTimeFormat("fr-FR", { dateStyle: "short", timeStyle: "short" }).format(date);
+      const summary = document.createElement("span");
+      summary.textContent = `${includeStatus ? `${status} · ` : ""}${loan.duree_jours} jour(s) · ${formattedDate}`;
+      details.append(title, summary);
+      if (loan.motif) {
+        const reason = document.createElement("span");
+        reason.textContent = `Motif : ${loan.motif}`;
+        details.append(reason);
+      }
+      group.append(icon, details);
+      container.append(group);
+    });
+  }
+
+  async function loadDashboardData() {
+    const [pcsResponse, loansResponse] = await Promise.all([
+      fetch("/api/pcs"),
+      fetch("/api/mes-emprunts")
+    ]);
+    const [pcsResult, loansResult] = await Promise.all([
+      pcsResponse.json(),
+      loansResponse.json()
+    ]);
+    if (!pcsResponse.ok || !pcsResult.success) {
+      throw new Error(pcsResult.error || "Impossible de charger le catalogue.");
+    }
+    if (!loansResponse.ok || !loansResult.success) {
+      throw new Error(loansResult.error || "Impossible de charger vos demandes.");
+    }
+
+    pcsResult.data.forEach((pc) => {
+      const card = document.querySelector(`.pc-card[data-pc="${pc.id}"]`);
+      if (!card) return;
+      card.dataset.status = pc.status;
+      card.dataset.pcId = pc.id;
+      const availability = card.querySelector(".availability");
+      const dot = availability?.querySelector(".dot");
+      const isAvailable = pc.status === "disponible";
+      const label = pc.status === "en_attente" ? "Demande en attente"
+        : pc.status === "emprunte" ? "Emprunté" : "Disponible";
+      if (availability) {
+        availability.className = `availability ${isAvailable ? "ok" : "busy"}`;
+        availability.replaceChildren();
+        if (dot) {
+          dot.className = `dot ${isAvailable ? "green" : "indigo"}`;
+          availability.append(dot);
+        }
+        availability.append(document.createTextNode(label));
+      }
+    });
+    updateCardsVisibility();
+
+    const loans = loansResult.data;
+    renderLoans(
+      requestsContainer,
+      loans.filter((loan) => loan.statut !== "en_cours"),
+      "Aucune demande ni aucun historique.",
+      true
+    );
+    renderLoans(
+      activeLoansContainer,
+      loans.filter((loan) => loan.statut === "en_cours"),
+      "Aucun emprunt en cours.",
+      false
+    );
+  }
+
+  loadDashboardData().catch((error) => {
+    [requestsContainer, activeLoansContainer].forEach((container) => {
+      if (container) container.textContent = error.message;
+    });
+    if (pcGrid) {
+      const message = document.createElement("p");
+      message.className = "catalog-message";
+      message.textContent = error.message;
+      pcGrid.prepend(message);
+      pcGrid.querySelectorAll(".pc-card").forEach((card) => {
+        card.dataset.status = "indisponible";
+        const availability = card.querySelector(".availability");
+        if (availability) availability.textContent = "Disponibilité inconnue";
+        const button = card.querySelector(".voir-btn");
+        if (button) button.disabled = true;
+      });
+      updateCardsVisibility();
+    }
+  });
 
   // 5. Sidebar Navigation Links
   const navItems = document.querySelectorAll(".nav-item");
