@@ -1,21 +1,29 @@
-# Lancer l'application (pour le testeur)
+# Démarrer EduLoan avec Docker
 
 ## Prérequis
-- Docker + Docker Compose installés
+- Docker avec Docker Compose
 
 ## Démarrage
+À la racine du projet :
+
 ```bash
 docker compose up --build
 ```
 
-L'app est servie sur http://localhost:8080
+Ouvrez http://localhost:8080. Le conteneur exécute le serveur Express et sert
+à la fois les pages web et les routes API.
+
+Les fichiers CSV se trouvent dans le volume Docker `eduloan_data` : les comptes
+et les demandes restent conservés après l’arrêt ou la recréation du conteneur.
 
 ## Arrêt
+
 ```bash
 docker compose down
 ```
 
-## Notes
-- Site statique HTML/CSS/JS servi par nginx, pas de base de données.
-- Si le port 8080 est déjà pris sur ta machine, change la partie gauche du mapping dans `docker-compose.yml` (ex: `"8081:80"`).
-- Pour voir les logs : `docker compose logs -f app`
+`docker compose down` conserve le volume. Pour repartir de zéro et effacer les
+données CSV, supprimez explicitement le volume avec `docker compose down -v`.
+
+Si le port 8080 est déjà utilisé, changez la partie gauche du mapping
+`8080:3000` dans `docker-compose.yml`.

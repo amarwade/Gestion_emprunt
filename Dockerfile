@@ -1,12 +1,11 @@
-# fait référence à l'image officielle de Nginx basée sur Alpine Linux, qui est légère et optimisée pour les performances.
-FROM nginx:alpine 
+FROM node:20-alpine
 
-# Config nginx custom (routing SPA, cache statique)
-COPY nginx/nginx.conf /etc/nginx/conf.d/default.conf
+WORKDIR /app
 
-# Copie le site statique dans le dossier servi par nginx
-# Adapte le nom du dossier source si mon code n'est pas à la racine (ex: ./public, ./src)
-COPY . /usr/share/nginx/html
+COPY package*.json ./
+RUN npm install --omit=dev
 
-# Expose le port 80 pour accéder à l'application
-EXPOSE 80 
+COPY . .
+
+EXPOSE 3000
+CMD ["npm", "start"]

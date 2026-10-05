@@ -10,13 +10,6 @@ document.addEventListener('DOMContentLoaded', () => {
   const globalError = document.getElementById('globalError');
   const globalSuccess = document.getElementById('globalSuccess');
 
-  // Données mock initiales pour les tests frontend
-  const MOCK_STUDENTS = [
-    { student_id: '2026120', nom: 'BENDAOU', prenom: 'Assia', password: 'password' },
-    { student_id: '2026125', nom: 'BENDAOU', prenom: 'Assia', password: 'password' },
-    { student_id: '2026130', nom: 'DIOP', prenom: 'Moussa', password: 'password' }
-  ];
-
   // ===== AFFICHAGE/MASQUAGE DU MOT DE PASSE =====
   if (togglePasswordBtn && passwordInput && eyeIcon) {
     togglePasswordBtn.addEventListener('click', (e) => {
@@ -136,68 +129,35 @@ document.addEventListener('DOMContentLoaded', () => {
       const studentId = studentIdInput.value.trim();
       const password = passwordInput.value;
 
-      // Simulation Frontend / Mock
-      let authSuccessful = false;
-      let userData = {
-        student_id: studentId,
-        nom: 'Étudiant',
-        prenom: 'Inscrit'
-      };
-
-      // 1. Vérifier dans le localStorage
       try {
-        const localRegistered = JSON.parse(localStorage.getItem('eduloan_etudiants_inscrits') || '[]');
-        const foundLocal = localRegistered.find(s => String(s.student_id).trim() === studentId);
-        if (foundLocal) {
-          authSuccessful = true;
-          userData = {
-            student_id: foundLocal.student_id,
-            nom: foundLocal.nom,
-            prenom: foundLocal.prenom
-          };
-        }
-      } catch (err) {}
+        const response = await fetch('/api/login', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ student_id: studentId, password })
+        });
+        const result = await response.json();
 
-      // 2. Vérifier dans les mocks initiaux si non trouvé
-      if (!authSuccessful) {
-        const foundMock = MOCK_STUDENTS.find(s => s.student_id === studentId);
-        if (foundMock) {
-          authSuccessful = true;
-          userData = {
-            student_id: foundMock.student_id,
-            nom: foundMock.nom,
-            prenom: foundMock.prenom
-          };
-        }
-      }
-
-      // 3. Si l'identifiant est au format valide (simulation souple pour les tests d'équipe)
-      if (!authSuccessful && /^\d{7}$/.test(studentId)) {
-        authSuccessful = true;
-        userData = {
-          student_id: studentId,
-          nom: 'Étudiant',
-          prenom: 'EduLoan'
-        };
-      }
-
-      // Traitement du résultat
-      setTimeout(() => {
-        if (authSuccessful) {
-          // Enregistrer la session en local
-          localStorage.setItem('eduloan_auth', 'true');
-          localStorage.setItem('eduloan_user', JSON.stringify(userData));
-
-          showSuccess(`Bienvenue ${userData.prenom} ${userData.nom} ! Redirection vers votre Espace Étudiant...`);
-          
-          setTimeout(() => {
-            window.location.href = 'espace-etudiant.html';
-          }, 1000);
-        } else {
-          showError('Identifiant ou mot de passe incorrect.');
+        if (!response.ok || !result.success) {
+          showError(result.error || 'La connexion a échoué.');
           resetButton();
+          return;
         }
-      }, 500);
+
+        const userData = result.data;
+        localStorage.setItem('eduloan_auth', 'true');
+        localStorage.setItem('eduloan_user', JSON.stringify(userData));
+        showSuccess(`Bienvenue ${userData.prenom} ${userData.nom} ! Redirection vers votre Espace Étudiant...`);
+        setTimeout(() => {
+          const requestedDestination = new URLSearchParams(window.location.search).get('redirect');
+          const destination = ['demande-pret.html', 'espace-etudiant.html'].includes(requestedDestination)
+            ? requestedDestination
+            : 'espace-etudiant.html';
+          window.location.href = destination;
+        }, 1000);
+      } catch (error) {
+        showError('Impossible de joindre le serveur. Vérifiez qu’il est démarré puis réessayez.');
+        resetButton();
+      }
     });
   }
 });
