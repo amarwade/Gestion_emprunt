@@ -48,9 +48,25 @@ document.addEventListener("DOMContentLoaded", async () => {
   // 2. Gestion des filtres et recherche des PC
   const cards = document.querySelectorAll(".pc-card");
   const filterBtns = document.querySelectorAll(".filter");
+  const sectionNavItems = document.querySelectorAll('.nav-item[href^="#"]');
   const searchInput = document.querySelector(".search input");
   let currentFilter = "disponible";
   let searchQuery = "";
+
+  function syncSectionNavigation() {
+    const activeHash = window.location.hash || "#pcs";
+    sectionNavItems.forEach((item) => {
+      item.classList.toggle("active-parent", item.getAttribute("href") === activeHash);
+    });
+  }
+
+  function selectFilter(filter) {
+    currentFilter = filter;
+    filterBtns.forEach((button) => {
+      button.classList.toggle("is-active", button.dataset.filter === filter);
+    });
+    updateCardsVisibility();
+  }
 
   function updateCardsVisibility() {
     cards.forEach((card) => {
@@ -67,16 +83,23 @@ document.addEventListener("DOMContentLoaded", async () => {
     });
   }
 
+  syncSectionNavigation();
   updateCardsVisibility();
 
   filterBtns.forEach((button) => {
     button.addEventListener("click", () => {
-      filterBtns.forEach((item) => item.classList.remove("is-active"));
-      button.classList.add("is-active");
-      currentFilter = button.dataset.filter;
-      updateCardsVisibility();
+      selectFilter(button.dataset.filter);
+      if (window.location.hash !== "#pcs") window.location.hash = "#pcs";
+      syncSectionNavigation();
     });
   });
+
+  sectionNavItems.forEach((item) => {
+    item.addEventListener("click", () => {
+      if (item.dataset.nav === "pcs") selectFilter("disponible");
+    });
+  });
+  window.addEventListener("hashchange", syncSectionNavigation);
 
   if (searchInput) {
     searchInput.addEventListener("input", (e) => {
@@ -175,7 +198,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     }
 
     loans.forEach((loan) => {
-      const card = document.querySelector(`.pc-card[data-pc-id="${loan.pc_id}"]`);
+      const card = document.querySelector(`.pc-card[data-pc="${loan.pc_id}"]`);
       const group = document.createElement("div");
       group.className = "group";
       const icon = document.createElement("div");
@@ -240,8 +263,9 @@ document.addEventListener("DOMContentLoaded", async () => {
       const availability = card.querySelector(".availability");
       const dot = availability?.querySelector(".dot");
       const isAvailable = pc.status === "disponible";
-      const label = pc.status === "en_attente" ? "Demande en attente"
-        : pc.status === "emprunte" ? "Emprunté" : "Disponible";
+      const filterStatus = pc.status === "en_cours" ? "emprunte" : pc.status;
+      const label = filterStatus === "en_attente" ? "Demande en attente"
+        : filterStatus === "emprunte" ? "Emprunté" : "Disponible";
       if (availability) {
         availability.className = `availability ${isAvailable ? "ok" : "busy"}`;
         availability.replaceChildren();
@@ -251,6 +275,7 @@ document.addEventListener("DOMContentLoaded", async () => {
         }
         availability.append(document.createTextNode(label));
       }
+      card.dataset.status = filterStatus;
     });
     updateCardsVisibility();
 
